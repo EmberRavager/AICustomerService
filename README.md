@@ -515,6 +515,4 @@ docker-compose exec frontend sh
 
 ---
 
-**Happy Coding! 🚀**#   A I C u s t o m e r S e r v i c e 
- 
- 
+**Happy Coding! 🚀**#
