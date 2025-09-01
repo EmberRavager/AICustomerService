@@ -57,6 +57,47 @@
 - **Docker**: 20.10+ (可选，用于容器化部署)
 - **Docker Compose**: 1.29+ (可选)
 
+### 🔒 Git 配置和安全说明
+
+#### 敏感文件保护
+
+项目已配置 `.gitignore` 文件，确保以下敏感文件不会被提交到版本控制：
+
+- **环境配置文件**: `.env`, `backend/.env` 等
+- **数据库文件**: `backend/data/chroma_db/`, `backend/data/memory/`
+- **日志文件**: `backend/logs/`, `*.log`
+- **上传文件**: `backend/uploads/`
+- **Python 缓存**: `__pycache__/`, `*.pyc`
+- **Node.js 依赖**: `node_modules/`
+- **构建文件**: `frontend/build/`, `frontend/dist/`
+
+#### 首次设置建议
+
+1. **检查 git 状态**：
+   ```bash
+   git status
+   ```
+
+2. **如果发现敏感文件已被跟踪，移除它们**：
+   ```bash
+   git rm --cached .env
+   git rm --cached -r backend/data/chroma_db/
+   git rm --cached -r backend/logs/
+   ```
+
+3. **提交 .gitignore 更改**：
+   ```bash
+   git add .gitignore
+   git commit -m "Add .gitignore to protect sensitive files"
+   ```
+
+#### ⚠️ 重要提醒
+
+- **永远不要提交包含真实 API 密钥的 `.env` 文件**
+- **使用 `.env.example` 作为配置模板**
+- **定期检查 `git status` 确保敏感文件未被跟踪**
+- **团队成员应各自配置自己的 `.env` 文件**
+
 ### Docker 部署（推荐）
 
 #### 使用部署脚本（推荐）
@@ -474,5 +515,6 @@ docker-compose exec frontend sh
 
 ---
 
-**Happy Coding! 🚀**#   A I C u s t o m e r S e r v i c e  
+**Happy Coding! 🚀**#   A I C u s t o m e r S e r v i c e 
+ 
  
