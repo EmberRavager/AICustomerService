@@ -1,0 +1,99 @@
+/* 设置页面样式 */
+
+.settings-page {
+  min-height: calc(100vh - 64px - 70px); /* 减去头部和底部高度 */
+  background: #f5f5f5;
+}
+
+.settings-content {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.settings-container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* 设置页面头部 */
+.settings-header {
+  background: #fff;
+  padding: 32px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  text-align: center;
+}
+
+.settings-header .ant-typography {
+  margin-bottom: 8px;
+}
+
+/* 设置卡片 */
+.settings-card {
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid #f0f0f0;
+  transition: all 0.3s ease;
+}
+
+.settings-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+.settings-card .ant-card-head {
+  border-bottom: 1px solid #f0f0f0;
+  background: #fafafa;
+}
+
+.settings-card .ant-card-head-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #262626;
+}
+
+/* 模型设置区域 */
+.model-settings {
+  display: flex;
+  flex-direction: column;
+}
+
+/* 聊天设置区域 */
+.chat-settings {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 120px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .settings-content {
+    padding: 16px;
+  }
+  
+  .settings-header {
+    padding: 24px 16px;
+  }
+  
+  .settings-card {
+    margin: 0;
+  }
+}
+
+@media (max-width: 576px) {
+  .settings-content {
+    padding: 12px;
+  }
+  
+  .settings-header {
+    padding: 20px 12px;
+  }
+  
+  .settings-header .ant-typography h2 {
+    font-size: 20px;
+  }
+}

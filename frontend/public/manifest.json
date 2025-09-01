@@ -1,0 +1,83 @@
+{
+  "short_name": "智能客服",
+  "name": "智能客服系统 - AI助手",
+  "description": "基于LangChain的智能客服系统，提供智能对话、问题解答和客户服务支持",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "logo192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "logo512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#1890ff",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "zh-CN",
+  "dir": "ltr",
+  "categories": ["productivity", "business", "utilities"],
+  "screenshots": [
+    {
+      "src": "screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "智能客服系统桌面版界面"
+    },
+    {
+      "src": "screenshot-narrow.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "智能客服系统移动版界面"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "新建对话",
+      "short_name": "新对话",
+      "description": "开始一个新的聊天对话",
+      "url": "/chat",
+      "icons": [
+        {
+          "src": "icon-new-chat.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "聊天历史",
+      "short_name": "历史",
+      "description": "查看聊天历史记录",
+      "url": "/history",
+      "icons": [
+        {
+          "src": "icon-history.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ],
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  }
+}

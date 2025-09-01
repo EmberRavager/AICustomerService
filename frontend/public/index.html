@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#1890ff" />
+  <meta name="description" content="基于LangChain的智能客服系统 - 提供智能对话、问题解答和客户服务支持" />
+  <meta name="keywords" content="智能客服,AI助手,LangChain,聊天机器人,客户服务" />
+  <meta name="author" content="智能客服系统开发团队" />
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="%PUBLIC_URL%" />
+  <meta property="og:title" content="智能客服系统" />
+  <meta property="og:description" content="基于LangChain的智能客服系统 - 提供智能对话、问题解答和客户服务支持" />
+  <meta property="og:image" content="%PUBLIC_URL%/og-image.png" />
+  
+  <!-- Twitter -->
+  <meta property="twitter:card" content="summary_large_image" />
+  <meta property="twitter:url" content="%PUBLIC_URL%" />
+  <meta property="twitter:title" content="智能客服系统" />
+  <meta property="twitter:description" content="基于LangChain的智能客服系统 - 提供智能对话、问题解答和客户服务支持" />
+  <meta property="twitter:image" content="%PUBLIC_URL%/twitter-image.png" />
+  
+  <!-- Apple Touch Icon -->
+  <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+  
+  <!-- Manifest -->
+  <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+  
+  <!-- Preconnect to external domains -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Ant Design Icons -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@ant-design/icons@latest/lib/index.css">
+  
+  <title>智能客服系统 - AI助手</title>
+  
+  <style>
+    /* 加载动画样式 */
+    .loading-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+      transition: opacity 0.3s ease;
+    }
+    
+    .loading-logo {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 20px;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    .loading-text {
+      font-size: 16px;
+      color: #1890ff;
+      font-weight: 500;
+      margin-bottom: 10px;
+    }
+    
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #f0f0f0;
+      border-top: 3px solid #1890ff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.05);
+        opacity: 0.8;
+      }
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    /* 隐藏加载动画 */
+    .loading-container.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    /* 基础样式重置 */
+    * {
+      box-sizing: border-box;
+    }
+    
+    body {
+      margin: 0;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      background-color: #f5f5f5;
+      line-height: 1.5;
+    }
+    
+    code {
+      font-family: 'Fira Code', 'Monaco', 'Consolas', 'Ubuntu Mono', monospace;
+    }
+    
+    /* 滚动条样式 */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: #c1c1c1;
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: #a8a8a8;
+    }
+    
+    /* 暗色主题支持 */
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #141414;
+        color: #fff;
+      }
+      
+      .loading-container {
+        background: #141414;
+      }
+      
+      .loading-text {
+        color: #40a9ff;
+      }
+      
+      ::-webkit-scrollbar-track {
+        background: #262626;
+      }
+      
+      ::-webkit-scrollbar-thumb {
+        background: #434343;
+      }
+      
+      ::-webkit-scrollbar-thumb:hover {
+        background: #595959;
+      }
+    }
+    
+    /* 响应式字体大小 */
+    @media (max-width: 768px) {
+      body {
+        font-size: 14px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      body {
+        font-size: 13px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <noscript>
+    <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
+      <h2>需要启用JavaScript</h2>
+      <p>此应用需要JavaScript才能正常运行，请在浏览器设置中启用JavaScript。</p>
+      <p>This app requires JavaScript to run. Please enable JavaScript in your browser settings.</p>
+    </div>
+  </noscript>
+  
+  <!-- 加载动画 -->
+  <div id="loading" class="loading-container">
+    <svg class="loading-logo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#1890ff" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M2 17L12 22L22 17" stroke="#1890ff" stroke-width="2" stroke-linejoin="round"/>
+      <path d="M2 12L12 17L22 12" stroke="#1890ff" stroke-width="2" stroke-linejoin="round"/>
+    </svg>
+    <div class="loading-text">智能客服系统</div>
+    <div class="loading-spinner"></div>
+  </div>
+  
+  <!-- React应用挂载点 -->
+  <div id="root"></div>
+  
+  <script>
+    // 隐藏加载动画
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        const loading = document.getElementById('loading');
+        if (loading) {
+          loading.classList.add('hidden');
+          setTimeout(function() {
+            loading.style.display = 'none';
+          }, 300);
+        }
+      }, 500);
+    });
+    
+    // 错误处理
+    window.addEventListener('error', function(e) {
+      console.error('应用错误:', e.error);
+    });
+    
+    // 未处理的Promise拒绝
+    window.addEventListener('unhandledrejection', function(e) {
+      console.error('未处理的Promise拒绝:', e.reason);
+    });
+    
+    // 性能监控
+    if ('performance' in window) {
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          const perfData = performance.getEntriesByType('navigation')[0];
+          if (perfData) {
+            console.log('页面加载性能:', {
+              domContentLoaded: perfData.domContentLoadedEventEnd - perfData.domContentLoadedEventStart,
+              loadComplete: perfData.loadEventEnd - perfData.loadEventStart,
+              totalTime: perfData.loadEventEnd - perfData.fetchStart
+            });
+          }
+        }, 0);
+      });
+    }
+  </script>
+</body>
+</html>

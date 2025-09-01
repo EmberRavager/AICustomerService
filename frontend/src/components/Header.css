@@ -1,0 +1,124 @@
+/* Header组件样式 */
+
+.app-header {
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 0 24px;
+  height: 64px;
+  line-height: 64px;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.header-icon {
+  font-size: 24px;
+  color: #1890ff;
+}
+
+.header-title {
+  margin: 0 !important;
+  color: #262626;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.header-button {
+  color: #595959;
+  border: none;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.3s ease;
+}
+
+.header-button:hover {
+  color: #1890ff;
+  background-color: #f0f8ff;
+}
+
+.header-button:focus {
+  color: #1890ff;
+  background-color: #f0f8ff;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .app-header {
+    padding: 0 16px;
+    height: 56px;
+    line-height: 56px;
+  }
+  
+  .header-title {
+    font-size: 18px !important;
+  }
+  
+  .header-icon {
+    font-size: 20px;
+  }
+  
+  .desktop-only {
+    display: none;
+  }
+  
+  .header-button {
+    height: 36px;
+    padding: 0 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-header {
+    padding: 0 12px;
+  }
+  
+  .header-title {
+    font-size: 16px !important;
+  }
+  
+  .header-icon {
+    font-size: 18px;
+  }
+}
+
+/* 暗色主题支持 */
+@media (prefers-color-scheme: dark) {
+  .app-header {
+    background: #141414;
+    border-bottom: 1px solid #303030;
+  }
+  
+  .header-title {
+    color: #fff;
+  }
+  
+  .header-button {
+    color: #d9d9d9;
+  }
+  
+  .header-button:hover {
+    color: #40a9ff;
+    background-color: #1f1f1f;
+  }
+}

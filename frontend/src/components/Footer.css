@@ -1,0 +1,150 @@
+/* Footer组件样式 */
+
+.app-footer {
+  background: #fff;
+  border-top: 1px solid #f0f0f0;
+  padding: 24px 24px 16px;
+  text-align: center;
+  margin-top: auto;
+}
+
+.footer-content {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.footer-main {
+  margin-bottom: 16px;
+}
+
+.footer-links {
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.footer-text {
+  color: #8c8c8c;
+  font-size: 14px;
+}
+
+.footer-link {
+  color: #8c8c8c;
+  font-size: 14px;
+  transition: color 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.footer-link:hover {
+  color: #1890ff;
+}
+
+.footer-bottom {
+  border-top: 1px solid #f0f0f0;
+  padding-top: 16px;
+}
+
+.footer-love {
+  color: #bfbfbf;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.heart-icon {
+  color: #ff4d4f;
+  animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+/* 心跳动画 */
+@keyframes heartbeat {
+  0% {
+    transform: scale(1);
+  }
+  14% {
+    transform: scale(1.1);
+  }
+  28% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.1);
+  }
+  70% {
+    transform: scale(1);
+  }
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .app-footer {
+    padding: 16px 16px 12px;
+  }
+  
+  .footer-main {
+    margin-bottom: 12px;
+  }
+  
+  .footer-links {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .footer-links .ant-space-item {
+    margin: 0;
+  }
+  
+  .footer-text,
+  .footer-link {
+    font-size: 13px;
+  }
+  
+  .footer-love {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .app-footer {
+    padding: 12px 12px 8px;
+  }
+  
+  .footer-text,
+  .footer-link {
+    font-size: 12px;
+  }
+  
+  .footer-love {
+    font-size: 10px;
+  }
+}
+
+/* 暗色主题支持 */
+@media (prefers-color-scheme: dark) {
+  .app-footer {
+    background: #141414;
+    border-top: 1px solid #303030;
+  }
+  
+  .footer-text {
+    color: #8c8c8c;
+  }
+  
+  .footer-link {
+    color: #8c8c8c;
+  }
+  
+  .footer-link:hover {
+    color: #40a9ff;
+  }
+  
+  .footer-love {
+    color: #595959;
+  }
+  
+  .footer-bottom {
+    border-top: 1px solid #303030;
+  }
+}
