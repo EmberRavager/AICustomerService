@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     baichuan_model: str = os.getenv("BAICHUAN_MODEL", "Baichuan2-Turbo")
     
     # 通义千问配置
-    qwen_api_key: str = os.getenv("QWEN_API_KEY", "sk-c4c02252bef8401faf354272aea06ec2")
+    qwen_api_key: str = os.getenv("QWEN_API_KEY", "")
     qwen_api_base: str = os.getenv("QWEN_API_BASE", "https://dashscope.aliyuncs.com/api/v1")
     qwen_model: str = os.getenv("QWEN_MODEL", "qwen-turbo")
     
