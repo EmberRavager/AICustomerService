@@ -3,7 +3,10 @@
 .env.local
 .env.development
 .env.production
+.env.example
 backend/.env
+backend/.env.example
+backend/config.py
 frontend/.env
 
 # Python
