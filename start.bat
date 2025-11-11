@@ -1,16 +1,22 @@
 @echo off
 chcp 65001 >nul
 echo ========================================
-echo 智能客服系统启动脚本
+echo 智能客服系统启动脚本 (UV版本)
 echo ========================================
 echo.
 
-:: 检查Python是否安装
-python --version >nul 2>&1
+:: 检查uv是否安装
+uv --version >nul 2>&1
 if %errorlevel% neq 0 (
-    echo ❌ 错误: 未找到Python，请先安装Python 3.8+
-    pause
-    exit /b 1
+    echo ❌ 错误: 未找到uv，正在自动安装...
+    echo 💡 使用命令: powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+    powershell -c "irm https://astral.sh/uv/install.ps1 | iex"
+    if %errorlevel% neq 0 (
+        echo ❌ uv安装失败，请手动安装: https://github.com/astral-sh/uv
+        pause
+        exit /b 1
+    )
+    echo ✅ uv 安装成功！
 )
 
 :: 检查Node.js是否安装
@@ -21,37 +27,12 @@ if %errorlevel% neq 0 (
     exit /b 1
 )
 
-echo ✅ Python和Node.js环境检查通过
+echo ✅ uv 和 Node.js 环境检查通过
 echo.
 
 :: 检查后端依赖
-echo 📦 检查后端依赖...
+echo 📦 使用 uv 管理后端依赖...
 cd /d "%~dp0backend"
-if not exist "venv" (
-    echo 🔧 创建Python虚拟环境...
-    python -m venv venv
-    if %errorlevel% neq 0 (
-        echo ❌ 创建虚拟环境失败
-        pause
-        exit /b 1
-    )
-)
-
-echo 🔧 激活虚拟环境...
-call venv\Scripts\activate.bat
-if %errorlevel% neq 0 (
-    echo ❌ 激活虚拟环境失败
-    pause
-    exit /b 1
-)
-
-echo 📥 安装Python依赖...
-pip install -r requirements.txt
-if %errorlevel% neq 0 (
-    echo ❌ 安装Python依赖失败
-    pause
-    exit /b 1
-)
 
 :: 检查环境配置文件
 if not exist ".env" (
@@ -59,6 +40,15 @@ if not exist ".env" (
     copy ".env.example" ".env"
     echo ⚠️  请编辑 backend\.env 文件，配置您的API密钥等信息
     echo.
+)
+
+:: 使用 uv sync 同步依赖（比 pip install 快很多）
+echo 📥 使用 uv 同步依赖...
+uv sync
+if %errorlevel% neq 0 (
+    echo ❌ uv sync 失败
+    pause
+    exit /b 1
 )
 
 :: 检查前端依赖
@@ -80,10 +70,10 @@ echo 🚀 启动智能客服系统
 echo ========================================
 echo.
 
-:: 启动后端服务
+:: 启动后端服务（使用 uv run）
 echo 🔧 启动后端服务...
 cd /d "%~dp0backend"
-start "智能客服系统-后端" cmd /k "venv\Scripts\activate.bat && python main.py"
+start "智能客服系统-后端" cmd /k "uv run python main.py"
 
 :: 等待后端启动
 echo ⏳ 等待后端服务启动...
@@ -99,7 +89,7 @@ echo ========================================
 echo ✅ 启动完成！
 echo ========================================
 echo.
-echo 📱 前端地址: http://localhost:3000
+echo 📱 前端地址: http://localhost:1111
 echo 🔧 后端API: http://localhost:8000
 echo 📚 API文档: http://localhost:8000/docs
 echo.

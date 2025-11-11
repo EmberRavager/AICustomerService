@@ -1,0 +1,109 @@
+[project]
+name = "ai-customer-service"
+version = "1.0.0"
+description = "基于LangChain和FastAPI的智能客服系统"
+requires-python = ">=3.9"
+authors = [
+    { name = "AI Assistant" }
+]
+license = "MIT"
+
+dependencies = [
+    # FastAPI 核心依赖
+    "fastapi>=0.104.1,<0.105",
+    "uvicorn[standard]>=0.24.0,<0.25",
+    "pydantic>=2.5.0,<3.0",
+    "pydantic-settings>=2.1.0,<3.0",
+    
+    # HTTP 客户端
+    "httpx>=0.25.2,<0.26",
+    "requests>=2.31.0,<3.0",
+    
+    # 数据库相关
+    "sqlalchemy>=2.0.23,<2.1",
+    "alembic>=1.13.1,<2.0",
+    "aiosqlite>=0.19.0,<0.20",
+    
+    # AI 和机器学习
+    "langchain>=0.1.0,<0.2",
+    "langchain-openai>=0.0.2,<0.1",
+    "langchain-community>=0.0.10,<0.1",
+    "openai>=1.6.1,<2.0",
+    "tiktoken>=0.5.2,<0.6",
+    
+    # 向量数据库
+    "chromadb>=0.4.18,<0.5",
+    "chroma-hnswlib>=0.7.3",  # 显式指定，优先使用预编译版本
+    "sentence-transformers>=2.2.2,<3.0",
+    "numpy>=1.24.4,<2.0",
+    "scipy>=1.11.4,<2.0",
+    
+    # 文本处理
+    "jieba>=0.42.1",
+    "markdown>=3.5.1,<4.0",
+    "python-multipart>=0.0.6,<0.1",
+    
+    # 日志和监控
+    "loguru>=0.7.2,<0.8",
+    
+    # 工具库
+    "python-dotenv>=1.0.0,<2.0",
+    "python-jose[cryptography]>=3.3.0,<4.0",
+    "passlib[bcrypt]>=1.7.4,<2.0",
+    "typing-extensions>=4.8.0,<5.0",
+    
+    # 数据处理
+    "pandas>=2.1.4,<3.0",
+    
+    # 缓存
+    "redis>=5.0.1,<6.0",
+    "aioredis>=2.0.1,<3.0",
+    
+    # 文件处理
+    "python-magic>=0.4.27,<0.5",
+    "Pillow>=10.1.0,<11.0",
+    
+    # 时间处理
+    "python-dateutil>=2.8.2,<3.0",
+    
+    # JSON处理
+    "orjson>=3.9.10,<4.0",
+    
+    # 异步支持
+    "aiofiles>=23.2.1,<24.0",
+    
+    # 安全
+    "cryptography>=41.0.0,<43.0",
+    
+    # 环境变量
+    "python-decouple>=3.8,<4.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==7.4.3",
+    "pytest-asyncio==0.21.1",
+]
+
+[project.scripts]
+start = "main:start_dev_server"
+
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = []
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["*"]
+exclude = ["tests*", "*.egg-info", "build", "dist"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
+
