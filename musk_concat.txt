@@ -1,6 +1,0 @@
-file 'musk_clips/clip1.mp4'
-file 'musk_clips/clip2.mp4'
-file 'musk_clips/clip3.mp4'
-file 'musk_clips/clip4.mp4'
-file 'musk_clips/clip5.mp4'
-file 'musk_clips/clip6.mp4'

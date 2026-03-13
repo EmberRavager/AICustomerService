@@ -57,6 +57,8 @@ backend/logs/
 *.sqlite3
 backend/data/chroma_db/
 backend/data/memory/
+backend/data/policy.json
+backend/data/tenants/
 
 # 上传文件
 backend/uploads/
@@ -78,6 +80,13 @@ frontend/dist/
 *.temp
 .DS_Store
 Thumbs.db
+
+# 临时媒体/脚本
+make_video.sh
+musk_clips/
+musk_*.txt
+musk_*.srt
+musk_*.mp4
 
 # Docker
 .dockerignore
