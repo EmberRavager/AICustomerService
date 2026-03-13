@@ -18,7 +18,7 @@ class ToolType(str, Enum):
     DATABASE = "database"
     CUSTOM = "custom"
 
-dataclass
+@dataclass
 class ToolParameter:
     name: str
     type: str
@@ -27,7 +27,7 @@ class ToolParameter:
     enum: Optional[List[str]] = None
     default: Optional[Any] = None
 
-dataclass
+@dataclass
 class ToolSchema:
     name: str
     description: str

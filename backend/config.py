@@ -6,6 +6,7 @@
 """
 
 import os
+import json
 from typing import Optional
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -59,6 +60,26 @@ class Settings(BaseSettings):
     yi_api_key: str = os.getenv("YI_API_KEY", "")
     yi_api_base: str = os.getenv("YI_API_BASE", "https://api.lingyiwanwu.com/v1")
     yi_model: str = os.getenv("YI_MODEL", "yi-34b-chat-0205")
+
+    # OpenRouter配置
+    openrouter_api_key: str = os.getenv("OPENROUTER_API_KEY", "")
+    openrouter_api_base: str = os.getenv("OPENROUTER_API_BASE", "https://openrouter.ai/api/v1")
+    openrouter_model: str = os.getenv("OPENROUTER_MODEL", "openai/gpt-4o-mini")
+    openrouter_referer: str = os.getenv("OPENROUTER_REFERER", "")
+    openrouter_title: str = os.getenv("OPENROUTER_TITLE", "")
+    openrouter_headers: str = os.getenv("OPENROUTER_HEADERS", "")
+
+    # 自定义OpenAI兼容配置
+    custom_api_key: str = os.getenv("CUSTOM_API_KEY", "")
+    custom_api_base: str = os.getenv("CUSTOM_API_BASE", "")
+    custom_model: str = os.getenv("CUSTOM_MODEL", "")
+    custom_headers: str = os.getenv("CUSTOM_HEADERS", "")
+
+    # 管理员认证配置
+    admin_username: str = os.getenv("ADMIN_USERNAME", "admin")
+    admin_password: str = os.getenv("ADMIN_PASSWORD", "admin123")
+    jwt_secret: str = os.getenv("JWT_SECRET", "change-me")
+    jwt_expire_minutes: int = int(os.getenv("JWT_EXPIRE_MINUTES", "720"))
     
     # 通用模型配置
     default_model: str = os.getenv("DEFAULT_MODEL", "qwen-turbo")
@@ -70,6 +91,18 @@ class Settings(BaseSettings):
     
     # 向量数据库配置
     chroma_persist_directory: str = os.getenv("CHROMA_PERSIST_DIRECTORY", "./data/chroma_db")
+
+    # 闲鱼商品接口配置
+    xianyu_api_base: str = os.getenv("XIAN_YU_API_BASE", "https://h5api.m.goofish.com")
+    xianyu_app_key: str = os.getenv("XIAN_YU_APP_KEY", "34839810")
+    xianyu_cookies: str = os.getenv("XIAN_YU_COOKIES", "")
+
+    # 自动发货配置（虚拟交易）
+    auto_ship_enabled: bool = os.getenv("AUTO_SHIP_ENABLED", "True").lower() == "true"
+    auto_ship_reply: str = os.getenv(
+        "AUTO_SHIP_REPLY",
+        "已为您安排自动发货，请稍等 1-3 分钟完成交付。如有问题随时联系。"
+    )
     
     # 系统提示词
     system_prompt: str = os.getenv(
@@ -85,6 +118,13 @@ class Settings(BaseSettings):
     host: str = os.getenv("HOST", "0.0.0.0")
     port: int = int(os.getenv("PORT", "8000"))
     debug: bool = os.getenv("DEBUG", "True").lower() == "true"
+
+    # CORS 和安全配置
+    cors_origins: str = os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:3000,http://127.0.0.1:3000,http://localhost:1111,http://127.0.0.1:1111"
+    )
+    allowed_hosts: str = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1")
     
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -92,9 +132,11 @@ class Settings(BaseSettings):
         extra="allow"
     )
 
-# CORS和安全配置（定义为模块级常量）
-Settings.ALLOWED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:1111", "http://127.0.0.1:1111"]
-Settings.ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+    def get_allowed_origins(self) -> list:
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
+
+    def get_allowed_hosts(self) -> list:
+        return [host.strip() for host in self.allowed_hosts.split(",") if host.strip()]
 
 # 创建全局配置实例
 settings = Settings()
@@ -115,7 +157,9 @@ def validate_config() -> bool:
             "baichuan": settings.baichuan_api_key,
             "qwen": settings.qwen_api_key,
             "moonshot": settings.moonshot_api_key,
-            "yi": settings.yi_api_key
+            "yi": settings.yi_api_key,
+            "openrouter": settings.openrouter_api_key,
+            "custom": settings.custom_api_key
         }
         
         if settings.model_provider not in provider_configs:
@@ -136,6 +180,17 @@ def validate_config() -> bool:
 
 def get_current_model_config() -> dict:
     """获取当前模型提供商的配置"""
+    def parse_headers(raw_value: str) -> dict:
+        if not raw_value:
+            return {}
+        try:
+            parsed = json.loads(raw_value)
+            if isinstance(parsed, dict):
+                return parsed
+        except Exception:
+            return {}
+        return {}
+
     model_configs = {
         "openai": {
             "api_key": settings.openai_api_key,
@@ -176,6 +231,20 @@ def get_current_model_config() -> dict:
             "api_key": settings.yi_api_key,
             "api_base": settings.yi_api_base,
             "model": settings.yi_model
+        },
+        "openrouter": {
+            "api_key": settings.openrouter_api_key,
+            "api_base": settings.openrouter_api_base,
+            "model": settings.openrouter_model,
+            "referer": settings.openrouter_referer,
+            "title": settings.openrouter_title,
+            "headers": parse_headers(settings.openrouter_headers)
+        },
+        "custom": {
+            "api_key": settings.custom_api_key,
+            "api_base": settings.custom_api_base,
+            "model": settings.custom_model,
+            "headers": parse_headers(settings.custom_headers)
         }
     }
     

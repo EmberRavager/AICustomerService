@@ -343,6 +343,81 @@ class YiAdapter(BaseModelAdapter):
         """验证零一万物配置"""
         return bool(self.api_key and self.model)
 
+class OpenRouterAdapter(BaseModelAdapter):
+    """OpenRouter模型适配器（OpenAI兼容）"""
+
+    def chat_completion(self, messages: List[Dict[str, str]], **kwargs) -> str:
+        try:
+            url = f"{self.api_base}/chat/completions"
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.api_key}"
+            }
+            extra_headers = self.config.get("headers") or {}
+            if isinstance(extra_headers, dict):
+                headers.update(extra_headers)
+            referer = self.config.get("referer")
+            title = self.config.get("title")
+            if referer:
+                headers["HTTP-Referer"] = referer
+            if title:
+                headers["X-Title"] = title
+
+            data = {
+                "model": self.model,
+                "messages": messages,
+                "temperature": kwargs.get("temperature", settings.temperature),
+                "max_tokens": kwargs.get("max_tokens", settings.max_tokens),
+                "top_p": kwargs.get("top_p", settings.top_p),
+                "frequency_penalty": kwargs.get("frequency_penalty", settings.frequency_penalty),
+                "presence_penalty": kwargs.get("presence_penalty", settings.presence_penalty)
+            }
+
+            response = requests.post(url, headers=headers, json=data)
+            response.raise_for_status()
+            result = response.json()
+            return result["choices"][0]["message"]["content"]
+        except Exception as e:
+            logger.error(f"OpenRouter API调用失败: {e}")
+            raise
+
+    def validate_config(self) -> bool:
+        return bool(self.api_key and self.model and self.api_base)
+
+class CustomAdapter(BaseModelAdapter):
+    """自定义OpenAI兼容模型适配器"""
+
+    def chat_completion(self, messages: List[Dict[str, str]], **kwargs) -> str:
+        try:
+            url = f"{self.api_base}/chat/completions"
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.api_key}"
+            }
+            extra_headers = self.config.get("headers") or {}
+            if isinstance(extra_headers, dict):
+                headers.update(extra_headers)
+            data = {
+                "model": self.model,
+                "messages": messages,
+                "temperature": kwargs.get("temperature", settings.temperature),
+                "max_tokens": kwargs.get("max_tokens", settings.max_tokens),
+                "top_p": kwargs.get("top_p", settings.top_p),
+                "frequency_penalty": kwargs.get("frequency_penalty", settings.frequency_penalty),
+                "presence_penalty": kwargs.get("presence_penalty", settings.presence_penalty)
+            }
+
+            response = requests.post(url, headers=headers, json=data)
+            response.raise_for_status()
+            result = response.json()
+            return result["choices"][0]["message"]["content"]
+        except Exception as e:
+            logger.error(f"Custom API调用失败: {e}")
+            raise
+
+    def validate_config(self) -> bool:
+        return bool(self.api_key and self.model and self.api_base)
+
 class ModelAdapterFactory:
     """模型适配器工厂类"""
     
@@ -354,11 +429,13 @@ class ModelAdapterFactory:
         "baichuan": BaichuanAdapter,
         "qwen": QwenAdapter,
         "moonshot": MoonshotAdapter,
-        "yi": YiAdapter
+        "yi": YiAdapter,
+        "openrouter": OpenRouterAdapter,
+        "custom": CustomAdapter
     }
     
     @classmethod
-    def create_adapter(cls, provider: str = None) -> BaseModelAdapter:
+    def create_adapter(cls, provider: Optional[str] = None, config_override: Optional[dict] = None) -> BaseModelAdapter:
         """创建模型适配器"""
         if provider is None:
             provider = settings.model_provider
@@ -366,7 +443,7 @@ class ModelAdapterFactory:
         if provider not in cls._adapters:
             raise ValueError(f"不支持的模型提供商: {provider}")
         
-        config = get_current_model_config()
+        config = config_override or get_current_model_config()
         adapter_class = cls._adapters[provider]
         adapter = adapter_class(config)
         

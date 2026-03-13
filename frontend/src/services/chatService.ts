@@ -53,6 +53,11 @@ class ChatService {
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
+
+        const tenantKey = localStorage.getItem('tenant_key');
+        if (tenantKey) {
+          config.headers['X-Tenant-Key'] = tenantKey;
+        }
         
         // 添加请求ID用于追踪
         config.headers['X-Request-ID'] = this.generateRequestId();
@@ -161,6 +166,9 @@ class ChatService {
          method: 'POST',
          headers: {
            'Content-Type': 'application/json',
+           ...(localStorage.getItem('tenant_key')
+             ? { 'X-Tenant-Key': localStorage.getItem('tenant_key') as string }
+             : {})
          },
          body: JSON.stringify(request),
        });
@@ -188,27 +196,31 @@ class ChatService {
           const chunk = decoder.decode(value, { stream: true });
           const lines = chunk.split('\n');
 
-          for (const line of lines) {
-            if (line.trim() === '') continue;
-            
-            try {
-              const data = JSON.parse(line);
-              
-              if (data.type === 'content') {
-                onChunk(data.content);
-                fullContent += data.content;
-              } else if (data.type === 'done') {
-                onComplete(fullContent);
-                return;
-              } else if (data.type === 'error') {
-                onError(data.error);
-                return;
+            for (const rawLine of lines) {
+              const line = rawLine.trim();
+              if (!line) continue;
+
+              const payload = line.startsWith('data:') ? line.replace(/^data:\s*/, '') : line;
+              if (!payload) continue;
+
+              try {
+                const data = JSON.parse(payload);
+
+                if (data.type === 'content') {
+                  onChunk(data.content);
+                  fullContent += data.content;
+                } else if (data.type === 'done') {
+                  onComplete(fullContent);
+                  return;
+                } else if (data.type === 'error') {
+                  onError(data.error);
+                  return;
+                }
+              } catch (parseError) {
+                console.warn('解析流数据失败:', parseError);
               }
-            } catch (parseError) {
-              console.warn('解析流数据失败:', parseError);
             }
           }
-        }
       } finally {
         reader.releaseLock();
       }
@@ -420,6 +432,112 @@ class ChatService {
       throw error;
     }
   }
+
+  /**
+   * 获取策略配置
+   */
+  async getPolicy(): Promise<any> {
+    try {
+      const response = await this.api.get<ApiResponse<any>>('/api/policy');
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+      throw this.createCustomError(
+        ErrorType.API_ERROR,
+        response.data.message || '获取策略失败',
+        response.data.error
+      );
+    } catch (error) {
+      console.error('获取策略失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 更新策略配置
+   */
+  async updatePolicy(updates: any): Promise<any> {
+    try {
+      const response = await this.api.put<ApiResponse<any>>('/api/policy', updates);
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+      throw this.createCustomError(
+        ErrorType.API_ERROR,
+        response.data.message || '更新策略失败',
+        response.data.error
+      );
+    } catch (error) {
+      console.error('更新策略失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 获取会话元信息
+   */
+  async getSessionMeta(sessionId: string): Promise<any> {
+    try {
+      const response = await this.api.get<ApiResponse<any>>(`/api/chat/sessions/${sessionId}/meta`);
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+      throw this.createCustomError(
+        ErrorType.API_ERROR,
+        response.data.message || '获取会话信息失败',
+        response.data.error
+      );
+    } catch (error) {
+      console.error('获取会话信息失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 设置人工接管
+   */
+  async setManualMode(sessionId: string, enabled: boolean): Promise<any> {
+    try {
+      const response = await this.api.post<ApiResponse<any>>(
+        `/api/chat/sessions/${sessionId}/manual`,
+        null,
+        { params: { enabled } }
+      );
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+      throw this.createCustomError(
+        ErrorType.API_ERROR,
+        response.data.message || '设置人工接管失败',
+        response.data.error
+      );
+    } catch (error) {
+      console.error('设置人工接管失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 获取闲鱼商品信息
+   */
+  async getItemInfo(itemId: string): Promise<any> {
+    try {
+      const response = await this.api.get<ApiResponse<any>>(`/api/knowledge/items/${itemId}`);
+
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      } else {
+        throw this.createCustomError(
+          ErrorType.API_ERROR,
+          response.data.message || '获取商品信息失败',
+          response.data.error
+        );
+      }
+    } catch (error) {
+      console.error('获取商品信息失败:', error);
+      throw error;
+    }
+  }
   
   /**
    * 测试连接
@@ -439,6 +557,132 @@ class ChatService {
    */
   getBaseURL(): string {
     return this.baseURL;
+  }
+
+  /**
+   * 管理员登录
+   */
+  async adminLogin(username: string, password: string): Promise<string> {
+    try {
+      const response = await this.api.post<ApiResponse<{ access_token: string }>>('/api/admin/login', {
+        username,
+        password
+      });
+
+      if (response.data.success && response.data.data?.access_token) {
+        this.setAuthToken(response.data.data.access_token);
+        return response.data.data.access_token;
+      }
+
+      throw this.createCustomError(
+        ErrorType.AUTH_ERROR,
+        response.data.message || '登录失败',
+        response.data.error
+      );
+    } catch (error) {
+      console.error('管理员登录失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 创建租户
+   */
+  async createTenant(payload: { name: string; api_key?: string; model_provider?: string; model_config?: any }): Promise<any> {
+    try {
+      const response = await this.api.post<ApiResponse<any>>('/api/tenants', payload);
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+      throw this.createCustomError(
+        ErrorType.API_ERROR,
+        response.data.message || '创建租户失败',
+        response.data.error
+      );
+    } catch (error) {
+      console.error('创建租户失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 获取租户配置
+   */
+  async getTenantConfig(tenantId: string): Promise<any> {
+    try {
+      const response = await this.api.get<ApiResponse<any>>(`/api/tenants/${tenantId}`);
+      if (response.data.success && response.data.data !== undefined) {
+        return response.data.data;
+      }
+      throw this.createCustomError(
+        ErrorType.API_ERROR,
+        response.data.message || '获取租户配置失败',
+        response.data.error
+      );
+    } catch (error) {
+      console.error('获取租户配置失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 更新租户配置
+   */
+  async updateTenantConfig(tenantId: string, payload: { api_key?: string; model_provider?: string; model_config?: any }): Promise<any> {
+    try {
+      const response = await this.api.put<ApiResponse<any>>(`/api/tenants/${tenantId}`, payload);
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+      throw this.createCustomError(
+        ErrorType.API_ERROR,
+        response.data.message || '更新租户配置失败',
+        response.data.error
+      );
+    } catch (error) {
+      console.error('更新租户配置失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 获取租户列表
+   */
+  async listTenants(): Promise<any> {
+    try {
+      const response = await this.api.get<ApiResponse<any>>('/api/tenants');
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+      throw this.createCustomError(
+        ErrorType.API_ERROR,
+        response.data.message || '获取租户列表失败',
+        response.data.error
+      );
+    } catch (error) {
+      console.error('获取租户列表失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 重置租户Key
+   */
+  async resetTenantKey(tenantId: string): Promise<any> {
+    try {
+      const response = await this.api.post<ApiResponse<any>>('/api/tenants/reset-key', { tenant_id: tenantId });
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+      throw this.createCustomError(
+        ErrorType.API_ERROR,
+        response.data.message || '重置租户Key失败',
+        response.data.error
+      );
+    } catch (error) {
+      console.error('重置租户Key失败:', error);
+      throw error;
+    }
   }
   
   /**

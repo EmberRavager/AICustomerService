@@ -79,7 +79,9 @@ const ModelSelector: React.FC<ModelSelectorProps> = ({ onModelChange }) => {
     baichuan: '百川智能',
     qwen: '通义千问',
     moonshot: '月之暗面',
-    yi: '零一万物'
+    yi: '零一万物',
+    openrouter: 'OpenRouter',
+    custom: '自定义'
   };
 
   /**

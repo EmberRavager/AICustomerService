@@ -9,7 +9,7 @@ import './ChatMessage.css';
  * 用于显示单条聊天消息，支持用户消息和AI回复
  */
 
-const { Text, Paragraph } = Typography;
+const { Text } = Typography;
 
 interface ChatMessageProps {
   message: ChatMessageType;

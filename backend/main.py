@@ -34,7 +34,7 @@ project_root = Path(__file__).parent
 sys.path.insert(0, str(project_root))
 
 from config import get_settings
-from routes import health_router, chat_router, knowledge_router
+from routes import health_router, chat_router, knowledge_router, order_router, policy_router, tenant_router, admin_router
 from api.model_api import router as model_router
 
 # 获取配置
@@ -100,12 +100,16 @@ app = FastAPI(
 # 配置CORS中间件
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",  # React开发服务器
-        "http://127.0.0.1:3000",
-        "http://localhost:8080",  # 可能的前端端口
-        "http://127.0.0.1:8080",
-    ] if settings.debug else settings.ALLOWED_ORIGINS,
+    allow_origins=(
+        [
+            "http://localhost:3000",  # React开发服务器
+            "http://127.0.0.1:3000",
+            "http://localhost:1111",
+            "http://127.0.0.1:1111",
+            "http://localhost:8080",  # 可能的前端端口
+            "http://127.0.0.1:8080",
+        ] + settings.get_allowed_origins()
+    ) if settings.debug else settings.get_allowed_origins(),
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
@@ -115,7 +119,7 @@ app.add_middleware(
 if not settings.debug:
     app.add_middleware(
         TrustedHostMiddleware,
-        allowed_hosts=settings.ALLOWED_HOSTS
+        allowed_hosts=settings.get_allowed_hosts()
     )
 
 # 请求日志中间件
@@ -198,7 +202,7 @@ async def general_exception_handler(request: Request, exc: Exception):
         content={
             "success": False,
             "code": 500,
-            "message": "服务器内部错误" if not settings.DEBUG else str(exc),
+            "message": "服务器内部错误" if not settings.debug else str(exc),
             "data": None,
             "timestamp": datetime.now().isoformat()
         }
@@ -208,6 +212,10 @@ async def general_exception_handler(request: Request, exc: Exception):
 app.include_router(health_router)
 app.include_router(chat_router)
 app.include_router(knowledge_router)
+app.include_router(order_router)
+app.include_router(policy_router)
+app.include_router(tenant_router)
+app.include_router(admin_router)
 app.include_router(model_router)
 
 # 静态文件服务（如果需要）
@@ -223,7 +231,7 @@ async def root():
     return {
         "message": "欢迎使用智能客服系统 API",
         "version": "1.0.0",
-        "docs": "/docs" if settings.DEBUG else "文档已禁用",
+        "docs": "/docs" if settings.debug else "文档已禁用",
         "health": "/api/health",
         "timestamp": datetime.now().isoformat()
     }

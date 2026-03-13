@@ -7,6 +7,7 @@
 
 import json
 import os
+import uuid
 from typing import List, Dict, Optional, Any
 from datetime import datetime, timedelta
 from loguru import logger
@@ -17,10 +18,13 @@ from config import get_settings
 class MemoryService:
     """记忆服务类"""
     
-    def __init__(self):
+    def __init__(self, tenant_id: Optional[str] = None):
         """初始化记忆服务"""
         self.settings = get_settings()
-        self.data_dir = "./data/memory"
+        base_dir = "./data"
+        if tenant_id:
+            base_dir = os.path.join(base_dir, "tenants", tenant_id)
+        self.data_dir = os.path.join(base_dir, "memory")
         self.sessions_file = os.path.join(self.data_dir, "sessions.json")
         self.conversations_dir = os.path.join(self.data_dir, "conversations")
         
@@ -240,6 +244,81 @@ class MemoryService:
         except Exception as e:
             logger.error(f"获取用户会话列表失败: {str(e)}")
             raise
+
+    async def create_session(self, title: Optional[str] = None, user_id: Optional[str] = None) -> Dict[str, Any]:
+        """创建新的聊天会话"""
+        try:
+            session_id = str(uuid.uuid4())
+            created_at = datetime.now().isoformat()
+
+            sessions_data = {}
+            if os.path.exists(self.sessions_file):
+                with open(self.sessions_file, "r", encoding="utf-8") as f:
+                    sessions_data = json.load(f)
+
+            sessions_data[session_id] = {
+                "user_id": user_id,
+                "title": title or f"会话 {session_id[:8]}",
+                "created_at": created_at,
+                "updated_at": created_at,
+                "message_count": 0,
+                "manual_mode": False,
+                "bargain_count": 0
+            }
+
+            with open(self.sessions_file, "w", encoding="utf-8") as f:
+                json.dump(sessions_data, f, ensure_ascii=False, indent=2)
+
+            return {
+                "id": session_id,
+                "title": sessions_data[session_id]["title"],
+                "created_at": created_at,
+                "updated_at": created_at,
+                "user_id": user_id,
+                "message_count": 0,
+                "manual_mode": False,
+                "bargain_count": 0
+            }
+
+        except Exception as e:
+            logger.error(f"创建会话失败: {str(e)}")
+            raise
+
+    async def delete_session(self, session_id: str):
+        """删除指定会话"""
+        await self.clear_chat_history(session_id)
+
+    async def get_session_meta(self, session_id: str) -> Dict[str, Any]:
+        """获取会话元信息"""
+        sessions_data = {}
+        if os.path.exists(self.sessions_file):
+            with open(self.sessions_file, "r", encoding="utf-8") as f:
+                sessions_data = json.load(f)
+        return sessions_data.get(session_id, {})
+
+    async def update_session_meta(self, session_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
+        """更新会话元信息"""
+        sessions_data = {}
+        if os.path.exists(self.sessions_file):
+            with open(self.sessions_file, "r", encoding="utf-8") as f:
+                sessions_data = json.load(f)
+        existing = sessions_data.get(session_id, {})
+        existing.update(updates)
+        sessions_data[session_id] = existing
+        with open(self.sessions_file, "w", encoding="utf-8") as f:
+            json.dump(sessions_data, f, ensure_ascii=False, indent=2)
+        return existing
+
+    async def set_manual_mode(self, session_id: str, enabled: bool) -> Dict[str, Any]:
+        """设置人工接管模式"""
+        return await self.update_session_meta(session_id, {"manual_mode": enabled})
+
+    async def increment_bargain_count(self, session_id: str) -> int:
+        """增加议价次数"""
+        meta = await self.get_session_meta(session_id)
+        count = int(meta.get("bargain_count", 0)) + 1
+        await self.update_session_meta(session_id, {"bargain_count": count})
+        return count
     
     def _is_cache_valid(self, session_id: str) -> bool:
         """检查缓存是否有效"""
@@ -285,12 +364,16 @@ class MemoryService:
             if os.path.exists(self.sessions_file):
                 with open(self.sessions_file, 'r', encoding='utf-8') as f:
                     sessions_data = json.load(f)
-            
+
+            existing_session = sessions_data.get(session_id, {})
             sessions_data[session_id] = {
-                "user_id": user_id,
-                "created_at": sessions_data.get(session_id, {}).get("created_at", datetime.now().isoformat()),
+                "user_id": user_id or existing_session.get("user_id"),
+                "title": existing_session.get("title", f"会话 {session_id[:8]}"),
+                "created_at": existing_session.get("created_at", datetime.now().isoformat()),
                 "updated_at": datetime.now().isoformat(),
-                "message_count": len(self.session_cache.get(session_id, []))
+                "message_count": len(self.session_cache.get(session_id, [])),
+                "manual_mode": existing_session.get("manual_mode", False),
+                "bargain_count": existing_session.get("bargain_count", 0)
             }
             
             with open(self.sessions_file, 'w', encoding='utf-8') as f:

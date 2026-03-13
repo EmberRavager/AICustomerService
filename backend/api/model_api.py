@@ -118,6 +118,16 @@ async def list_models():
                 "api_key": settings.yi_api_key,
                 "api_base": settings.yi_api_base,
                 "model": settings.yi_model
+            },
+            "openrouter": {
+                "api_key": settings.openrouter_api_key,
+                "api_base": settings.openrouter_api_base,
+                "model": settings.openrouter_model
+            },
+            "custom": {
+                "api_key": settings.custom_api_key,
+                "api_base": settings.custom_api_base,
+                "model": settings.custom_model
             }
         }
         
@@ -292,6 +302,18 @@ async def get_provider_models(provider: str):
             "yi-34b-chat-0205", "yi-34b-chat-200k", "yi-vl-plus"
         ]
     }
+
+    if provider == "openrouter":
+        return {
+            "provider": provider,
+            "models": [settings.openrouter_model] if settings.openrouter_model else []
+        }
+
+    if provider == "custom":
+        return {
+            "provider": provider,
+            "models": [settings.custom_model] if settings.custom_model else []
+        }
     
     if provider not in provider_models:
         raise HTTPException(status_code=404, detail=f"不支持的提供商: {provider}")

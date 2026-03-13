@@ -11,6 +11,8 @@
 - **知识库管理**: 支持向量搜索和关键词搜索的混合检索
 - **对话记忆**: 多轮对话上下文管理和会话持久化
 - **会话管理**: 支持多会话切换和历史记录管理
+- **策略配置**: 自动发货、风控提醒、意图路由、人工接管
+- **多租户隔离**: 每个租户独立模型配置与知识库
 
 ### 🛠️ 技术特性
 - **前后端分离**: React + TypeScript 前端，FastAPI 后端
@@ -56,6 +58,52 @@
 - **npm**: 8+
 - **Docker**: 20.10+ (可选，用于容器化部署)
 - **Docker Compose**: 1.29+ (可选)
+
+## 🧩 多租户接入
+
+系统支持多租户隔离，不同租户可配置不同的模型 Key、模型参数与知识库内容。
+租户数据将存储在 `data/tenants/<tenant_id>/` 目录下。
+
+### 管理员登录
+
+```bash
+POST /api/admin/login
+{
+  "username": "admin",
+  "password": "admin123"
+}
+```
+
+成功后使用 `Authorization: Bearer <token>` 调用租户管理接口。
+
+### 创建租户
+
+```bash
+POST /api/tenants
+{
+  "name": "shop_a",
+  "model_provider": "openrouter",
+  "model_config": {
+    "api_key": "your_openrouter_api_key",
+    "api_base": "https://openrouter.ai/api/v1",
+    "model": "openai/gpt-4o-mini"
+  }
+}
+```
+
+返回值会包含 `tenant_id` 与 `api_key`。
+
+> 租户管理接口需要先使用管理员登录获取 `Bearer` Token。
+
+### 使用租户 Key 调用接口
+
+所有对外调用请携带头部：
+
+```
+X-Tenant-Key: <your_tenant_key>
+```
+
+系统会自动隔离该租户的会话、知识库与策略配置。
 
 ### 🔒 Git 配置和安全说明
 
@@ -284,6 +332,35 @@ PORT=8000
 # 数据库配置
 DATABASE_URL=sqlite:///./data/chatbot.db
 CHROMA_PERSIST_DIRECTORY=./data/chroma_db
+
+# 闲鱼商品接口（可选）
+XIAN_YU_API_BASE=https://h5api.m.goofish.com
+XIAN_YU_APP_KEY=34839810
+XIAN_YU_COOKIES=your_xianyu_cookie_string
+
+# 自动发货（虚拟交易）
+AUTO_SHIP_ENABLED=True
+AUTO_SHIP_REPLY=已为您安排自动发货，请稍等 1-3 分钟完成交付。如有问题随时联系。
+
+# 管理员认证（多租户管理）
+ADMIN_USERNAME=admin
+ADMIN_PASSWORD=admin123
+JWT_SECRET=change-me
+JWT_EXPIRE_MINUTES=720
+
+# OpenRouter（可选）
+OPENROUTER_API_KEY=your_openrouter_api_key
+OPENROUTER_API_BASE=https://openrouter.ai/api/v1
+OPENROUTER_MODEL=openai/gpt-4o-mini
+OPENROUTER_REFERER=
+OPENROUTER_TITLE=
+OPENROUTER_HEADERS={"X-My-Header":"value"}
+
+# 自定义OpenAI兼容接口（可选）
+CUSTOM_API_KEY=your_custom_api_key
+CUSTOM_API_BASE=https://your-openai-compatible-base
+CUSTOM_MODEL=your-model-name
+CUSTOM_HEADERS={"X-My-Header":"value"}
 ```
 
 完整配置说明请参考 `backend/.env.example` 文件。
@@ -292,8 +369,22 @@ CHROMA_PERSIST_DIRECTORY=./data/chroma_db
 
 ### 主要 API 端点
 
+#### 管理员
+- `POST /api/admin/login` - 管理员登录
+- `GET /api/admin/me` - 获取管理员信息
+
+#### 多租户
+- `POST /api/tenants` - 创建租户
+- `GET /api/tenants` - 获取租户列表
+- `GET /api/tenants/{tenant_id}` - 获取租户配置
+- `PUT /api/tenants/{tenant_id}` - 更新租户配置
+- `POST /api/tenants/reset-key` - 重置租户Key
+
+> 管理员可在更新租户配置时设置自定义 `api_key`
+
 #### 聊天相关
 - `POST /api/chat/` - 发送聊天消息
+- `POST /api/chat/stream` - 流式聊天
 - `GET /api/chat/history` - 获取聊天历史
 - `DELETE /api/chat/history/{session_id}` - 清除聊天历史
 - `GET /api/chat/sessions` - 获取会话列表
@@ -304,9 +395,15 @@ CHROMA_PERSIST_DIRECTORY=./data/chroma_db
 - `POST /api/knowledge/` - 添加知识
 - `PUT /api/knowledge/{id}` - 更新知识
 - `DELETE /api/knowledge/{id}` - 删除知识
+- `GET /api/knowledge/items/{item_id}` - 获取商品信息
 
 #### 系统相关
 - `GET /api/health` - 健康检查
+- `GET /api/policy` - 获取策略配置
+- `PUT /api/policy` - 更新策略配置
+- `POST /api/orders/callback` - 订单回调自动发货
+
+> 多租户调用请在请求头携带 `X-Tenant-Key`
 
 详细的 API 文档可在启动后访问 http://localhost:8000/docs 查看。
 
@@ -327,6 +424,27 @@ CHROMA_PERSIST_DIRECTORY=./data/chroma_db
 - 📋 消息复制功能
 - 🔄 会话切换和管理
 - 📊 消息状态指示
+
+## 🌐 对外接入
+
+### 独立聊天页
+
+访问 `http://localhost:3000/support` 即可打开对外聊天页面。
+
+### 右下角小窗嵌入
+
+在外部网站中插入以下脚本即可显示右下角客服小窗：
+
+```html
+<script
+  src="http://localhost:8000/static/widget.js"
+  data-tenant-key="your_tenant_key"
+  data-title="在线客服"
+  data-url="http://localhost:3000/widget"
+></script>
+```
+
+> `data-tenant-key` 用于租户隔离，不同租户显示不同模型与知识库内容。
 
 ## 🔧 开发指南
 

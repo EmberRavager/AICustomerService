@@ -80,6 +80,8 @@ export interface ChatRequest {
     includeSystem?: boolean;
     /** 自定义参数 */
     customParams?: Record<string, any>;
+    /** 商品ID */
+    item_id?: string;
   };
 }
 

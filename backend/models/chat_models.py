@@ -103,3 +103,5 @@ class ChatSettings(BaseModel):
     system_prompt: Optional[str] = Field(None, description="系统提示词")
     enable_memory: bool = Field(default=True, description="是否启用记忆功能")
     memory_window: int = Field(default=10, description="记忆窗口大小", gt=0)
+    enable_knowledge_base: bool = Field(default=True, description="是否启用知识库检索")
+    max_history_length: int = Field(default=50, description="历史记录最大长度", gt=0)

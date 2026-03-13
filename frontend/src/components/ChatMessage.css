@@ -91,13 +91,14 @@
   word-break: break-word;
   line-height: 1.5;
   font-size: 14px;
-  max-width: 100%;
+  max-width: 72%;
   transition: all 0.2s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
 /* 用户消息气泡 */
 .user-bubble {
-  background: linear-gradient(135deg, #1890ff 0%, #40a9ff 100%);
+  background: #1677ff;
   color: #fff;
   border-bottom-right-radius: 6px;
 }
@@ -110,17 +111,17 @@
   width: 0;
   height: 0;
   border: 6px solid transparent;
-  border-left-color: #40a9ff;
+  border-left-color: #1677ff;
   border-bottom: none;
   border-right: none;
 }
 
 /* AI助手消息气泡 */
 .assistant-bubble {
-  background: #f6f6f6;
+  background: #ffffff;
   color: #262626;
   border-bottom-left-radius: 6px;
-  border: 1px solid #e8e8e8;
+  border: 1px solid #e6e6e6;
 }
 
 .assistant-bubble::after {
@@ -131,7 +132,7 @@
   width: 0;
   height: 0;
   border: 6px solid transparent;
-  border-right-color: #f6f6f6;
+  border-right-color: #ffffff;
   border-bottom: none;
   border-left: none;
 }
@@ -144,7 +145,7 @@
   width: 0;
   height: 0;
   border: 6px solid transparent;
-  border-right-color: #e8e8e8;
+  border-right-color: #e6e6e6;
   border-bottom: none;
   border-left: none;
 }
@@ -235,6 +236,10 @@
   .message-body {
     max-width: calc(100% - 50px);
   }
+
+  .message-bubble {
+    max-width: 86%;
+  }
   
   .message-bubble {
     padding: 10px 14px;
@@ -280,6 +285,10 @@
   
   .message-body {
     max-width: calc(100% - 44px);
+  }
+
+  .message-bubble {
+    max-width: 92%;
   }
   
   .message-bubble {

@@ -23,6 +23,9 @@ tiktoken==0.5.2
 # 向量数据库
 chromadb==0.4.18
 sentence-transformers==2.2.2
+huggingface-hub==0.13.4
+transformers==4.26.1
+tokenizers==0.13.3
 numpy==1.24.4
 scipy==1.11.4
 
@@ -66,7 +69,7 @@ aiofiles==23.2.1
 aioredis==2.0.1
 
 # 安全
-cryptography==41.0.8
+cryptography==41.0.7
 
 # 环境变量
 python-decouple==3.8

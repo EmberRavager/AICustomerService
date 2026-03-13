@@ -1,0 +1,76 @@
+.widget-page {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: #ffffff;
+  font-size: 14px;
+}
+
+.widget-header {
+  padding: 12px 16px;
+  background: #1677ff;
+  color: #fff;
+  font-weight: 600;
+}
+
+.widget-item-info {
+  padding: 10px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fff7e6;
+  font-size: 12px;
+  color: #613400;
+}
+
+.widget-item-error {
+  color: #a8071a;
+}
+
+.widget-item-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.widget-item-title {
+  font-weight: 600;
+}
+
+.widget-item-meta {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.widget-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px;
+  background: #f7f9fc;
+}
+
+.widget-empty {
+  color: #8c8c8c;
+  text-align: center;
+  margin-top: 24px;
+}
+
+.widget-loading {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #8c8c8c;
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.widget-input {
+  padding: 12px;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.widget-input .ant-input {
+  border-radius: 8px;
+}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { Layout, Card, Input, Button, Space, message, Spin } from 'antd';
+import { Layout, Card, Input, Button, Space, message, Spin, Switch, Tag } from 'antd';
 import { SendOutlined, ClearOutlined, HistoryOutlined } from '@ant-design/icons';
 import { v4 as uuidv4 } from 'uuid';
 import ChatMessage from '../components/ChatMessage';
@@ -29,6 +29,10 @@ const ChatPage: React.FC = () => {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [showHistory, setShowHistory] = useState(true);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [itemInfo, setItemInfo] = useState<any | null>(null);
+  const [itemInfoLoading, setItemInfoLoading] = useState(false);
+  const [itemInfoError, setItemInfoError] = useState<string | null>(null);
+  const [manualMode, setManualMode] = useState(false);
   
   // 引用
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -67,6 +71,19 @@ const ChatPage: React.FC = () => {
       }));
       
       setMessages(formattedMessages);
+
+      // 从历史消息中恢复商品信息
+      const historyItemId = [...formattedMessages]
+        .reverse()
+        .map(msg => extractItemId(msg.content))
+        .find(id => !!id);
+
+      if (historyItemId) {
+        loadItemInfo(historyItemId);
+      } else {
+        setItemInfo(null);
+        setItemInfoError(null);
+      }
     } catch (error) {
       console.error('加载聊天历史失败:', error);
       message.error('加载聊天历史失败');
@@ -84,6 +101,50 @@ const ChatPage: React.FC = () => {
       setSessions(sessionList);
     } catch (error) {
       console.error('加载会话列表失败:', error);
+    }
+  };
+
+  /**
+   * 加载会话元信息
+   */
+  const loadSessionMeta = async (sessionId: string) => {
+    try {
+      const meta = await chatService.getSessionMeta(sessionId);
+      setManualMode(!!meta.manual_mode);
+    } catch (error) {
+      setManualMode(false);
+    }
+  };
+
+  /**
+   * 从文本中提取商品ID
+   */
+  const extractItemId = (text: string): string | null => {
+    if (!text) return null;
+    const patterns = [/itemId=(\d+)/, /\/item\/(\d+)/, /itemId%3D(\d+)/];
+    for (const pattern of patterns) {
+      const match = text.match(pattern);
+      if (match && match[1]) {
+        return match[1];
+      }
+    }
+    return null;
+  };
+
+  /**
+   * 加载商品信息
+   */
+  const loadItemInfo = async (itemId: string) => {
+    try {
+      setItemInfoLoading(true);
+      setItemInfoError(null);
+      const data = await chatService.getItemInfo(itemId);
+      setItemInfo(data);
+    } catch (error: any) {
+      setItemInfo(null);
+      setItemInfoError(error?.message || '商品信息加载失败');
+    } finally {
+      setItemInfoLoading(false);
     }
   };
   
@@ -107,6 +168,26 @@ const ChatPage: React.FC = () => {
     setMessages(prev => [...prev, userMessage]);
     setInputValue('');
     setIsLoading(true);
+
+    // 提取商品ID并加载商品信息
+    const itemId = extractItemId(userMessage.content);
+    if (itemId) {
+      loadItemInfo(itemId);
+    }
+
+    // 人工接管模式不触发AI回复
+    if (manualMode) {
+      const manualReply: ChatMessageType = {
+        id: uuidv4(),
+        content: '当前会话已转人工处理，消息已记录。',
+        type: 'assistant',
+        timestamp: new Date(),
+        sessionId: currentSessionId
+      };
+      setMessages(prev => [...prev, manualReply]);
+      setIsLoading(false);
+      return;
+    }
     
     // 创建AI消息占位符
     const aiMessageId = uuidv4();
@@ -128,7 +209,8 @@ const ChatPage: React.FC = () => {
         {
           message: userMessage.content,
           session_id: currentSessionId,
-          user_id: 'user_001' // 可以从用户上下文获取
+          user_id: 'user_001', // 可以从用户上下文获取
+          context: itemId ? { item_id: itemId } : undefined
         },
         // onChunk: 处理流式数据块
         (chunk: string) => {
@@ -212,6 +294,8 @@ const ChatPage: React.FC = () => {
   const switchSession = (sessionId: string) => {
     setCurrentSessionId(sessionId);
     loadChatHistory(sessionId);
+    loadSessionMeta(sessionId);
+    setShowHistory(false);
   };
   
   /**
@@ -222,6 +306,9 @@ const ChatPage: React.FC = () => {
     setCurrentSessionId(newSessionId);
     setMessages([]);
     setShowHistory(false);
+    setItemInfo(null);
+    setItemInfoError(null);
+    setManualMode(false);
   };
   
   /**
@@ -243,6 +330,7 @@ const ChatPage: React.FC = () => {
       loadChatHistory(sessionId);
     }
     loadSessions();
+    loadSessionMeta(sessionId);
   }, [urlSessionId]);
   
   // 消息变化时滚动到底部
@@ -305,7 +393,49 @@ const ChatPage: React.FC = () => {
                 清除会话
               </Button>
             </Space>
+            <Space size={6}>
+              {manualMode && <Tag color="orange">人工接管中</Tag>}
+              <span>人工接管</span>
+              <Switch
+                checked={manualMode}
+                onChange={async (checked) => {
+                  try {
+                    await chatService.setManualMode(currentSessionId, checked);
+                    setManualMode(checked);
+                    message.success(checked ? '已切换为人工接管' : '已恢复自动回复');
+                  } catch (error) {
+                    message.error('切换失败');
+                  }
+                }}
+              />
+            </Space>
           </div>
+
+          {/* 商品信息 */}
+          {(itemInfoLoading || itemInfo || itemInfoError) && (
+            <div className="item-info-bar">
+              {itemInfoLoading && (
+                <div className="item-info-loading">正在加载商品信息...</div>
+              )}
+              {itemInfoError && (
+                <div className="item-info-error">{itemInfoError}</div>
+              )}
+              {itemInfo && (
+                <div className="item-info-content">
+                  <div className="item-info-title">{itemInfo.title || '未知商品'}</div>
+                  <div className="item-info-meta">
+                    <span>商品ID: {itemInfo.item_id}</span>
+                    {itemInfo.price_yuan !== null && itemInfo.price_yuan !== undefined && (
+                      <span>价格: ¥{itemInfo.price_yuan}</span>
+                    )}
+                    {itemInfo.quantity !== null && itemInfo.quantity !== undefined && (
+                      <span>库存: {itemInfo.quantity}</span>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
           
           {/* 消息列表区域 */}
           <div className="messages-container">
@@ -319,6 +449,24 @@ const ChatPage: React.FC = () => {
                 <div className="welcome-text">👋 欢迎使用智能客服系统</div>
                 <div className="welcome-description">
                   我是您的AI助手，可以帮助您解答各种问题。请输入您的问题开始对话。
+                </div>
+                <div className="feature-grid">
+                  <div className="feature-card">
+                    <div className="feature-title">商品信息联动</div>
+                    <div className="feature-desc">粘贴商品链接或 itemId，自动抓取关键信息</div>
+                  </div>
+                  <div className="feature-card">
+                    <div className="feature-title">议价与技术意图</div>
+                    <div className="feature-desc">识别议价/技术咨询场景，生成更贴合的答复</div>
+                  </div>
+                  <div className="feature-card">
+                    <div className="feature-title">风控提醒</div>
+                    <div className="feature-desc">命中风险关键词时自动提示安全交易</div>
+                  </div>
+                  <div className="feature-card">
+                    <div className="feature-title">人工接管</div>
+                    <div className="feature-desc">一键切换人工处理，保留会话历史</div>
+                  </div>
                 </div>
               </div>
             ) : (

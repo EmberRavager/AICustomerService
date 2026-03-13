@@ -185,7 +185,7 @@ MAX_SEARCH_RESULTS=10
 2. **backend** (FastAPI + Python)
    - 端口：8000
    - 功能：API 服务
-   - 健康检查：`http://localhost:8000/health`
+    - 健康检查：`http://localhost:8000/api/health`
 
 3. **redis** (Redis Cache)
    - 端口：6379
@@ -286,7 +286,7 @@ docker-compose ps
 
 # 手动健康检查
 curl http://localhost:80/health      # 前端
-curl http://localhost:8000/health    # 后端
+    curl http://localhost:8000/api/health    # 后端
 docker-compose exec redis redis-cli ping  # Redis
 ```
 
@@ -504,7 +504,7 @@ docker-compose exec backend python -c "import openai; print('API Key configured'
    ```bash
    docker-compose ps
    curl http://localhost:80/health
-   curl http://localhost:8000/health
+    curl http://localhost:8000/api/health
    ```
 
 ### 定期维护
