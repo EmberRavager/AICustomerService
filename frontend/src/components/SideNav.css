@@ -1,0 +1,46 @@
+.app-sider {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+}
+
+.sider-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 20px 18px 10px;
+  font-weight: 600;
+  color: var(--accent);
+  font-family: 'Playfair Display', serif;
+  letter-spacing: 0.3px;
+}
+
+.brand-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #b88647, #9d6b2f);
+  box-shadow: 0 0 0 4px rgba(184, 134, 71, 0.18);
+}
+
+.sider-menu {
+  background: transparent;
+  border-right: 0;
+  padding: 8px;
+}
+
+.sider-menu .ant-menu-item {
+  border-radius: 12px;
+  margin: 4px 0;
+  color: var(--text-secondary);
+}
+
+.sider-menu .ant-menu-item-selected {
+  background: rgba(184, 134, 71, 0.16) !important;
+  color: var(--brand-strong) !important;
+}
+
+.sider-menu .ant-menu-item:hover {
+  background: rgba(184, 134, 71, 0.1);
+  color: var(--accent);
+}

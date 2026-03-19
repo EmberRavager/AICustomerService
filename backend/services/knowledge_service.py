@@ -15,6 +15,7 @@ from loguru import logger
 try:
     import chromadb
     from chromadb.config import Settings as ChromaSettings
+
     CHROMA_AVAILABLE = True
 except ImportError:
     CHROMA_AVAILABLE = False
@@ -22,6 +23,7 @@ except ImportError:
 
 try:
     from sentence_transformers import SentenceTransformer
+
     SENTENCE_TRANSFORMERS_AVAILABLE = True
 except ImportError:
     SENTENCE_TRANSFORMERS_AVAILABLE = False
@@ -31,33 +33,41 @@ import jieba
 from models.chat_models import KnowledgeBase
 from config import get_settings
 from services.xianyu_service import XianyuService
+from services.tenant_service import TenantService
+
 
 class KnowledgeService:
     """知识库服务类"""
-    
+
     def __init__(self, tenant_id: Optional[str] = None):
         """初始化知识库服务"""
         self.settings = get_settings()
-        self.xianyu_service = XianyuService()
+        tenant_config = {}
+        if tenant_id:
+            tenant_config = TenantService().get_tenant_config(tenant_id)
+        xianyu_cookies = None
+        if tenant_config:
+            xianyu_cookies = tenant_config.get("xianyu", {}).get("cookies")
+        self.xianyu_service = XianyuService(cookies_str=xianyu_cookies)
         base_dir = "./data"
         if tenant_id:
             base_dir = os.path.join(base_dir, "tenants", tenant_id)
         self.data_dir = os.path.join(base_dir, "knowledge")
         self.knowledge_file = os.path.join(self.data_dir, "knowledge_base.json")
         self.chroma_dir = os.path.join(base_dir, "chroma_db")
-        
+
         # 创建必要的目录
         self._ensure_directories()
-        
+
         # 初始化向量数据库
         self.vector_db = None
         self.embedding_model = None
         self._init_vector_components()
-        
+
         # 加载知识库
         self.knowledge_items: List[KnowledgeBase] = []
         self._load_knowledge_base()
-        
+
         logger.info("知识库服务初始化完成")
 
     async def get_item_context(self, item_id: str) -> Dict[str, Any]:
@@ -72,7 +82,9 @@ class KnowledgeService:
             logger.warning(f"获取闲鱼商品信息失败: {e}")
             return {}
 
-    def _build_item_context(self, item_id: str, item_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _build_item_context(
+        self, item_id: str, item_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """构建商品上下文信息"""
         title = item_data.get("title") or ""
         description = item_data.get("desc") or item_data.get("description") or ""
@@ -93,11 +105,13 @@ class KnowledgeService:
                 value_text = prop.get("valueText")
                 if value_text:
                     spec_parts.append(value_text)
-            sku_list.append({
-                "spec": " ".join(spec_parts) if spec_parts else "默认规格",
-                "price": sku.get("price"),
-                "stock": sku.get("quantity")
-            })
+            sku_list.append(
+                {
+                    "spec": " ".join(spec_parts) if spec_parts else "默认规格",
+                    "price": sku.get("price"),
+                    "stock": sku.get("quantity"),
+                }
+            )
 
         return {
             "source": "xianyu",
@@ -107,23 +121,23 @@ class KnowledgeService:
             "price_raw": raw_price,
             "price_yuan": price_yuan,
             "quantity": quantity,
-            "sku": sku_list
+            "sku": sku_list,
         }
-    
+
     def _ensure_directories(self):
         """确保必要的目录存在"""
         try:
             os.makedirs(self.data_dir, exist_ok=True)
             os.makedirs(self.chroma_dir, exist_ok=True)
-            
+
             # 如果知识库文件不存在，创建默认知识库
             if not os.path.exists(self.knowledge_file):
                 self._create_default_knowledge_base()
-                
+
         except Exception as e:
             logger.error(f"创建目录失败: {str(e)}")
             raise
-    
+
     def _init_vector_components(self):
         """初始化向量数据库和嵌入模型"""
         try:
@@ -131,26 +145,27 @@ class KnowledgeService:
                 # 初始化ChromaDB
                 self.vector_db = chromadb.PersistentClient(
                     path=self.chroma_dir,
-                    settings=ChromaSettings(anonymized_telemetry=False)
+                    settings=ChromaSettings(anonymized_telemetry=False),
                 )
-                
+
                 # 获取或创建集合
                 self.collection = self.vector_db.get_or_create_collection(
-                    name="knowledge_base",
-                    metadata={"description": "智能客服知识库"}
+                    name="knowledge_base", metadata={"description": "智能客服知识库"}
                 )
-                
+
                 logger.info("ChromaDB初始化成功")
-            
+
             if SENTENCE_TRANSFORMERS_AVAILABLE:
                 # 初始化嵌入模型（使用中文模型）
-                self.embedding_model = SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')
+                self.embedding_model = SentenceTransformer(
+                    "paraphrase-multilingual-MiniLM-L12-v2"
+                )
                 logger.info("嵌入模型初始化成功")
-                
+
         except Exception as e:
             logger.error(f"向量组件初始化失败: {str(e)}")
             # 不抛出异常，允许系统在没有向量功能的情况下运行
-    
+
     def _create_default_knowledge_base(self):
         """创建默认知识库"""
         try:
@@ -162,7 +177,7 @@ class KnowledgeService:
                     "category": "通用",
                     "tags": ["欢迎", "介绍", "帮助"],
                     "created_at": datetime.now().isoformat(),
-                    "updated_at": None
+                    "updated_at": None,
                 },
                 {
                     "id": str(uuid.uuid4()),
@@ -171,7 +186,7 @@ class KnowledgeService:
                     "category": "产品",
                     "tags": ["功能", "介绍", "产品"],
                     "created_at": datetime.now().isoformat(),
-                    "updated_at": None
+                    "updated_at": None,
                 },
                 {
                     "id": str(uuid.uuid4()),
@@ -180,25 +195,25 @@ class KnowledgeService:
                     "category": "技术支持",
                     "tags": ["技术", "支持", "问题", "解决"],
                     "created_at": datetime.now().isoformat(),
-                    "updated_at": None
-                }
+                    "updated_at": None,
+                },
             ]
-            
-            with open(self.knowledge_file, 'w', encoding='utf-8') as f:
+
+            with open(self.knowledge_file, "w", encoding="utf-8") as f:
                 json.dump(default_knowledge, f, ensure_ascii=False, indent=2)
-            
+
             logger.info("默认知识库创建成功")
-            
+
         except Exception as e:
             logger.error(f"创建默认知识库失败: {str(e)}")
-    
+
     def _load_knowledge_base(self):
         """加载知识库"""
         try:
             if os.path.exists(self.knowledge_file):
-                with open(self.knowledge_file, 'r', encoding='utf-8') as f:
+                with open(self.knowledge_file, "r", encoding="utf-8") as f:
                     knowledge_data = json.load(f)
-                
+
                 self.knowledge_items = []
                 for item in knowledge_data:
                     try:
@@ -209,71 +224,76 @@ class KnowledgeService:
                             category=item.get("category"),
                             tags=item.get("tags", []),
                             created_at=datetime.fromisoformat(item["created_at"]),
-                            updated_at=datetime.fromisoformat(item["updated_at"]) if item.get("updated_at") else None
+                            updated_at=datetime.fromisoformat(item["updated_at"])
+                            if item.get("updated_at")
+                            else None,
                         )
                         self.knowledge_items.append(kb_item)
                     except Exception as e:
                         logger.warning(f"解析知识库项失败: {str(e)}")
                         continue
-                
+
                 logger.info(f"知识库加载成功，共{len(self.knowledge_items)}条记录")
-                
+
                 # 如果有向量数据库，同步知识库到向量数据库
                 if self.vector_db and self.embedding_model:
                     self._sync_to_vector_db()
-            
+
         except Exception as e:
             logger.error(f"加载知识库失败: {str(e)}")
-    
+
     def _sync_to_vector_db(self):
         """同步知识库到向量数据库"""
         try:
             if not (self.vector_db and self.embedding_model):
                 return
-            
+
             # 清空现有集合
             try:
                 self.vector_db.delete_collection("knowledge_base")
             except:
                 pass
-            
+
             self.collection = self.vector_db.get_or_create_collection(
-                name="knowledge_base",
-                metadata={"description": "智能客服知识库"}
+                name="knowledge_base", metadata={"description": "智能客服知识库"}
             )
-            
+
             # 添加知识库项到向量数据库
             for item in self.knowledge_items:
                 try:
                     # 组合标题和内容作为文档
                     document = f"{item.title}\n{item.content}"
-                    
+
                     # 生成嵌入向量
                     embedding = self.embedding_model.encode(document).tolist()
-                    
+
                     # 添加到集合
                     self.collection.add(
                         documents=[document],
                         embeddings=[embedding],
-                        metadatas=[{
-                            "id": item.id,
-                            "title": item.title,
-                            "category": item.category or "",
-                            "tags": ",".join(item.tags)
-                        }],
-                        ids=[item.id]
+                        metadatas=[
+                            {
+                                "id": item.id,
+                                "title": item.title,
+                                "category": item.category or "",
+                                "tags": ",".join(item.tags),
+                            }
+                        ],
+                        ids=[item.id],
                     )
-                    
+
                 except Exception as e:
                     logger.warning(f"同步知识库项到向量数据库失败: {str(e)}")
                     continue
-            
+
             logger.info("知识库已同步到向量数据库")
-            
+
         except Exception as e:
             logger.error(f"同步到向量数据库失败: {str(e)}")
-    
-    async def search_knowledge(self, query: str, limit: int = 5, search_type: str = "hybrid") -> List[KnowledgeBase]:
+
+    async def search_knowledge(
+        self, query: str, limit: int = 5, search_type: str = "hybrid"
+    ) -> List[KnowledgeBase]:
         """搜索知识库"""
         try:
             search_type = (search_type or "hybrid").lower()
@@ -306,9 +326,13 @@ class KnowledgeService:
             logger.error(f"知识库搜索失败: {str(e)}")
             return []
 
-    async def search(self, query: str, limit: int = 5, search_type: str = "hybrid") -> List[KnowledgeBase]:
+    async def search(
+        self, query: str, limit: int = 5, search_type: str = "hybrid"
+    ) -> List[KnowledgeBase]:
         """兼容旧接口的搜索方法"""
-        return await self.search_knowledge(query=query, limit=limit, search_type=search_type)
+        return await self.search_knowledge(
+            query=query, limit=limit, search_type=search_type
+        )
 
     async def add_knowledge(self, knowledge: KnowledgeBase) -> KnowledgeBase:
         """添加知识库内容"""
@@ -317,7 +341,9 @@ class KnowledgeService:
             raise ValueError("添加知识库内容失败")
         return knowledge
 
-    async def update_knowledge(self, knowledge_id: str, knowledge: KnowledgeBase) -> KnowledgeBase:
+    async def update_knowledge(
+        self, knowledge_id: str, knowledge: KnowledgeBase
+    ) -> KnowledgeBase:
         """更新知识库内容"""
         success = await self.update_knowledge_item(knowledge_id, knowledge)
         if not success:
@@ -331,17 +357,15 @@ class KnowledgeService:
             raise ValueError("删除知识库内容失败")
         return success
 
-    async def list_knowledge(self, category: Optional[str] = None, limit: int = 20, offset: int = 0) -> List[KnowledgeBase]:
+    async def list_knowledge(
+        self, category: Optional[str] = None, limit: int = 20, offset: int = 0
+    ) -> List[KnowledgeBase]:
         """获取知识库列表"""
         items = self.knowledge_items
         if category:
             items = [item for item in items if item.category == category]
 
-        items = sorted(
-            items,
-            key=lambda x: (x.updated_at or x.created_at),
-            reverse=True
-        )
+        items = sorted(items, key=lambda x: x.updated_at or x.created_at, reverse=True)
 
         start_idx = max(offset, 0)
         end_idx = start_idx + max(limit, 1)
@@ -352,7 +376,9 @@ class KnowledgeService:
         categories = {item.category for item in self.knowledge_items if item.category}
         return sorted(categories)
 
-    async def batch_add_knowledge(self, knowledge_list: List[KnowledgeBase]) -> List[KnowledgeBase]:
+    async def batch_add_knowledge(
+        self, knowledge_list: List[KnowledgeBase]
+    ) -> List[KnowledgeBase]:
         """批量添加知识库内容"""
         results: List[KnowledgeBase] = []
         for item in knowledge_list:
@@ -360,20 +386,20 @@ class KnowledgeService:
             if success:
                 results.append(item)
         return results
-    
+
     async def _vector_search(self, query: str, limit: int) -> List[KnowledgeBase]:
         """向量搜索"""
         try:
             # 生成查询向量
             query_embedding = self.embedding_model.encode(query).tolist()
-            
+
             # 在向量数据库中搜索
             results = self.collection.query(
                 query_embeddings=[query_embedding],
                 n_results=limit,
-                include=["documents", "metadatas", "distances"]
+                include=["documents", "metadatas", "distances"],
             )
-            
+
             # 转换结果
             knowledge_results = []
             if results["ids"] and results["ids"][0]:
@@ -383,49 +409,53 @@ class KnowledgeService:
                         if item.id == doc_id:
                             knowledge_results.append(item)
                             break
-            
+
             logger.debug(f"向量搜索完成，找到{len(knowledge_results)}条结果")
             return knowledge_results
-            
+
         except Exception as e:
             logger.error(f"向量搜索失败: {str(e)}")
             return []
-    
+
     async def _keyword_search(self, query: str, limit: int) -> List[KnowledgeBase]:
         """关键词搜索"""
         try:
             # 使用jieba分词
             query_words = list(jieba.cut(query.lower()))
-            query_words = [word.strip() for word in query_words if len(word.strip()) > 1]
-            
+            query_words = [
+                word.strip() for word in query_words if len(word.strip()) > 1
+            ]
+
             # 计算相关性得分
             scored_items = []
             for item in self.knowledge_items:
                 score = self._calculate_relevance_score(item, query_words)
                 if score > 0:
                     scored_items.append((item, score))
-            
+
             # 按得分排序
             scored_items.sort(key=lambda x: x[1], reverse=True)
-            
+
             # 返回前limit个结果
             results = [item for item, score in scored_items[:limit]]
-            
+
             logger.debug(f"关键词搜索完成，找到{len(results)}条结果")
             return results
-            
+
         except Exception as e:
             logger.error(f"关键词搜索失败: {str(e)}")
             return []
-    
-    def _calculate_relevance_score(self, item: KnowledgeBase, query_words: List[str]) -> float:
+
+    def _calculate_relevance_score(
+        self, item: KnowledgeBase, query_words: List[str]
+    ) -> float:
         """计算相关性得分"""
         try:
             score = 0.0
-            
+
             # 搜索文本（标题 + 内容 + 标签）
             search_text = f"{item.title} {item.content} {' '.join(item.tags)}".lower()
-            
+
             # 计算匹配得分
             for word in query_words:
                 if word in search_text:
@@ -438,41 +468,43 @@ class KnowledgeService:
                     # 内容匹配权重较低
                     else:
                         score += 1.0
-            
+
             return score
-            
+
         except Exception as e:
             logger.warning(f"计算相关性得分失败: {str(e)}")
             return 0.0
-    
+
     async def add_knowledge_item(self, item: KnowledgeBase) -> bool:
         """添加知识库项"""
         try:
             # 生成ID（如果没有）
             if not item.id:
                 item.id = str(uuid.uuid4())
-            
+
             # 设置创建时间
             item.created_at = datetime.now()
-            
+
             # 添加到内存列表
             self.knowledge_items.append(item)
-            
+
             # 保存到文件
             await self._save_knowledge_base()
-            
+
             # 如果有向量数据库，添加到向量数据库
             if self.vector_db and self.embedding_model:
                 await self._add_to_vector_db(item)
-            
+
             logger.info(f"知识库项已添加: {item.title}")
             return True
-            
+
         except Exception as e:
             logger.error(f"添加知识库项失败: {str(e)}")
             return False
-    
-    async def update_knowledge_item(self, item_id: str, updated_item: KnowledgeBase) -> bool:
+
+    async def update_knowledge_item(
+        self, item_id: str, updated_item: KnowledgeBase
+    ) -> bool:
         """更新知识库项"""
         try:
             # 查找并更新项
@@ -481,26 +513,26 @@ class KnowledgeService:
                     updated_item.id = item_id
                     updated_item.created_at = item.created_at
                     updated_item.updated_at = datetime.now()
-                    
+
                     self.knowledge_items[i] = updated_item
-                    
+
                     # 保存到文件
                     await self._save_knowledge_base()
-                    
+
                     # 重新同步到向量数据库
                     if self.vector_db and self.embedding_model:
                         self._sync_to_vector_db()
-                    
+
                     logger.info(f"知识库项已更新: {updated_item.title}")
                     return True
-            
+
             logger.warning(f"未找到要更新的知识库项: {item_id}")
             return False
-            
+
         except Exception as e:
             logger.error(f"更新知识库项失败: {str(e)}")
             return False
-    
+
     async def delete_knowledge_item(self, item_id: str) -> bool:
         """删除知识库项"""
         try:
@@ -508,84 +540,90 @@ class KnowledgeService:
             for i, item in enumerate(self.knowledge_items):
                 if item.id == item_id:
                     deleted_item = self.knowledge_items.pop(i)
-                    
+
                     # 保存到文件
                     await self._save_knowledge_base()
-                    
+
                     # 从向量数据库删除
                     if self.vector_db:
                         try:
                             self.collection.delete(ids=[item_id])
                         except Exception as e:
                             logger.warning(f"从向量数据库删除失败: {str(e)}")
-                    
+
                     logger.info(f"知识库项已删除: {deleted_item.title}")
                     return True
-            
+
             logger.warning(f"未找到要删除的知识库项: {item_id}")
             return False
-            
+
         except Exception as e:
             logger.error(f"删除知识库项失败: {str(e)}")
             return False
-    
+
     async def get_all_knowledge_items(self) -> List[KnowledgeBase]:
         """获取所有知识库项"""
         return self.knowledge_items.copy()
-    
+
     async def get_knowledge_item_by_id(self, item_id: str) -> Optional[KnowledgeBase]:
         """根据ID获取知识库项"""
         for item in self.knowledge_items:
             if item.id == item_id:
                 return item
         return None
-    
+
     async def _save_knowledge_base(self):
         """保存知识库到文件"""
         try:
             knowledge_data = []
             for item in self.knowledge_items:
-                knowledge_data.append({
-                    "id": item.id,
-                    "title": item.title,
-                    "content": item.content,
-                    "category": item.category,
-                    "tags": item.tags,
-                    "created_at": item.created_at.isoformat(),
-                    "updated_at": item.updated_at.isoformat() if item.updated_at else None
-                })
-            
-            with open(self.knowledge_file, 'w', encoding='utf-8') as f:
+                knowledge_data.append(
+                    {
+                        "id": item.id,
+                        "title": item.title,
+                        "content": item.content,
+                        "category": item.category,
+                        "tags": item.tags,
+                        "created_at": item.created_at.isoformat(),
+                        "updated_at": item.updated_at.isoformat()
+                        if item.updated_at
+                        else None,
+                    }
+                )
+
+            with open(self.knowledge_file, "w", encoding="utf-8") as f:
                 json.dump(knowledge_data, f, ensure_ascii=False, indent=2)
-                
+
         except Exception as e:
             logger.error(f"保存知识库失败: {str(e)}")
             raise
-    
+
     async def _add_to_vector_db(self, item: KnowledgeBase):
         """添加单个项到向量数据库"""
         try:
             if not (self.vector_db and self.embedding_model):
                 return
-            
+
             # 组合标题和内容作为文档
             document = f"{item.title}\n{item.content}"
-            
+
             # 生成嵌入向量
             embedding = self.embedding_model.encode(document).tolist()
-            
+
             # 添加到集合
             self.collection.add(
                 documents=[document],
                 embeddings=[embedding],
-                metadatas=[{
-                    "id": item.id,
-                    "title": item.title,
-                    "category": item.category or "",
-                    "tags": ",".join(item.tags)
-                }],
-                ids=[item.id]
+                metadatas=[
+                    {
+                        "id": item.id,
+                        "title": item.title,
+                        "category": item.category or "",
+                        "tags": ",".join(item.tags),
+                    }
+                ],
+                ids=[item.id],
             )
-            
+
         except Exception as e:
             logger.error(f"添加到向量数据库失败: {str(e)}")

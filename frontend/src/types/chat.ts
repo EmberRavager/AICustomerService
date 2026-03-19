@@ -138,19 +138,17 @@ export interface ChatSettings {
   /** 温度参数 */
   temperature?: number;
   /** 最大token数 */
-  maxTokens?: number;
+  max_tokens?: number;
   /** 系统提示 */
-  systemPrompt?: string;
-  /** 历史消息限制 */
-  historyLimit?: number;
-  /** 是否启用流式响应 */
-  streamResponse?: boolean;
-  /** 自动保存设置 */
-  autoSave?: boolean;
-  /** 主题设置 */
-  theme?: 'light' | 'dark' | 'auto';
-  /** 语言设置 */
-  language?: 'zh-CN' | 'en-US';
+  system_prompt?: string | null;
+  /** 是否启用记忆功能 */
+  enable_memory?: boolean;
+  /** 记忆窗口大小 */
+  memory_window?: number;
+  /** 是否启用知识库检索 */
+  enable_knowledge_base?: boolean;
+  /** 历史记录最大长度 */
+  max_history_length?: number;
 }
 
 /**
@@ -214,7 +212,7 @@ export interface PaginatedResponse<T> {
  */
 export interface KnowledgeItem {
   /** 条目ID */
-  id: string;
+  id?: string;
   /** 标题 */
   title: string;
   /** 内容 */
@@ -224,11 +222,9 @@ export interface KnowledgeItem {
   /** 标签 */
   tags?: string[];
   /** 创建时间 */
-  createdAt: Date;
+  created_at?: string;
   /** 更新时间 */
-  updatedAt: Date;
-  /** 相关性评分 */
-  relevanceScore?: number;
+  updated_at?: string | null;
 }
 
 /**

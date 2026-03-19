@@ -1,5 +1,7 @@
 /* 全局样式文件 */
 
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap');
+
 * {
   margin: 0;
   padding: 0;
@@ -8,17 +10,42 @@
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: 'Manrope', 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f5f5f5;
+  background-color: var(--app-bg);
+  color: var(--text-primary);
+}
+
+:root {
+  --app-bg: #f6f1ea;
+  --app-bg-strong: #efe7dc;
+  --surface: #ffffff;
+  --surface-elevated: #fffaf4;
+  --surface-muted: #f7f2eb;
+  --border: rgba(35, 28, 22, 0.12);
+  --border-strong: rgba(35, 28, 22, 0.2);
+  --text-primary: #2b241c;
+  --text-secondary: #6f6254;
+  --text-tertiary: #9b8d7b;
+  --brand: #b88647;
+  --brand-strong: #9d6b2f;
+  --accent: #2f2a24;
+  --success: #1e8f67;
+  --warning: #d08a3c;
+  --danger: #b43d3d;
+  --shadow-sm: 0 4px 12px rgba(35, 28, 22, 0.08);
+  --shadow-md: 0 12px 24px rgba(35, 28, 22, 0.12);
+  --shadow-lg: 0 22px 40px rgba(35, 28, 22, 0.18);
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --transition: 0.25s ease;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
 }
 
 /* 滚动条样式 */
@@ -28,17 +55,17 @@ code {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: rgba(35, 28, 22, 0.08);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c1c1c1;
+  background: rgba(35, 28, 22, 0.28);
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a8a8a8;
+  background: rgba(35, 28, 22, 0.4);
 }
 
 /* 通用工具类 */
@@ -125,4 +152,47 @@ code {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Typography accents */
+h1,
+h2,
+h3,
+.header-title,
+.public-header,
+.widget-header {
+  font-family: 'Playfair Display', serif;
+  letter-spacing: 0.3px;
+}
+
+/* Ant Design overrides */
+.ant-btn-primary {
+  background: linear-gradient(135deg, var(--brand), var(--brand-strong));
+  border: none;
+  box-shadow: 0 8px 18px rgba(184, 134, 71, 0.25);
+}
+
+.ant-btn-primary:hover,
+.ant-btn-primary:focus {
+  background: linear-gradient(135deg, #c89555, #a66d31);
+}
+
+.ant-card {
+  border-radius: var(--radius-lg);
+}
+
+.ant-input,
+.ant-input-affix-wrapper,
+.ant-select-selector,
+.ant-input-number {
+  border-radius: var(--radius-md) !important;
+  border-color: var(--border) !important;
+}
+
+.ant-input:focus,
+.ant-input-affix-wrapper-focused,
+.ant-select-focused .ant-select-selector,
+.ant-input-number-focused {
+  box-shadow: 0 0 0 2px rgba(184, 134, 71, 0.18) !important;
+  border-color: var(--brand) !important;
 }

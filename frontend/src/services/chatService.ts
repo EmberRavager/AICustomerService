@@ -10,7 +10,8 @@ import {
   PaginatedResponse,
   SystemStatus,
   ErrorType,
-  CustomError
+  CustomError,
+  KnowledgeItem
 } from '../types/chat';
 
 /**
@@ -560,6 +561,185 @@ class ChatService {
   }
 
   /**
+   * 搜索知识库
+   */
+  async searchKnowledge(query: string, limit: number = 10, searchType: string = 'hybrid'): Promise<KnowledgeItem[]> {
+    try {
+      const response = await this.api.get<ApiResponse<KnowledgeItem[]>>('/api/knowledge', {
+        params: { query, limit, search_type: searchType }
+      });
+
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+      throw this.createCustomError(
+        ErrorType.API_ERROR,
+        response.data.message || '搜索知识库失败',
+        response.data.error
+      );
+    } catch (error) {
+      console.error('搜索知识库失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 获取知识库列表
+   */
+  async listKnowledge(category?: string, limit: number = 20, offset: number = 0): Promise<KnowledgeItem[]> {
+    try {
+      const response = await this.api.get<ApiResponse<KnowledgeItem[]>>('/api/knowledge/list', {
+        params: { category, limit, offset }
+      });
+
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+      throw this.createCustomError(
+        ErrorType.API_ERROR,
+        response.data.message || '获取知识库列表失败',
+        response.data.error
+      );
+    } catch (error) {
+      console.error('获取知识库列表失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 获取知识库分类
+   */
+  async getKnowledgeCategories(): Promise<string[]> {
+    try {
+      const response = await this.api.get<ApiResponse<string[]>>('/api/knowledge/categories');
+
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+      throw this.createCustomError(
+        ErrorType.API_ERROR,
+        response.data.message || '获取分类失败',
+        response.data.error
+      );
+    } catch (error) {
+      console.error('获取分类失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 添加知识库条目
+   */
+  async addKnowledge(payload: KnowledgeItem): Promise<KnowledgeItem> {
+    try {
+      const response = await this.api.post<ApiResponse<KnowledgeItem>>('/api/knowledge', payload);
+
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+      throw this.createCustomError(
+        ErrorType.API_ERROR,
+        response.data.message || '添加知识库失败',
+        response.data.error
+      );
+    } catch (error) {
+      console.error('添加知识库失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 更新知识库条目
+   */
+  async updateKnowledge(knowledgeId: string, payload: KnowledgeItem): Promise<KnowledgeItem> {
+    try {
+      const response = await this.api.put<ApiResponse<KnowledgeItem>>(`/api/knowledge/${knowledgeId}`, payload);
+
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+      throw this.createCustomError(
+        ErrorType.API_ERROR,
+        response.data.message || '更新知识库失败',
+        response.data.error
+      );
+    } catch (error) {
+      console.error('更新知识库失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 删除知识库条目
+   */
+  async deleteKnowledge(knowledgeId: string): Promise<void> {
+    try {
+      const response = await this.api.delete<ApiResponse>(`/api/knowledge/${knowledgeId}`);
+
+      if (!response.data.success) {
+        throw this.createCustomError(
+          ErrorType.API_ERROR,
+          response.data.message || '删除知识库失败',
+          response.data.error
+        );
+      }
+    } catch (error) {
+      console.error('删除知识库失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 批量添加知识库条目
+   */
+  async batchAddKnowledge(payload: KnowledgeItem[]): Promise<KnowledgeItem[]> {
+    try {
+      const response = await this.api.post<ApiResponse<KnowledgeItem[]>>('/api/knowledge/batch', payload);
+
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+      throw this.createCustomError(
+        ErrorType.API_ERROR,
+        response.data.message || '批量添加失败',
+        response.data.error
+      );
+    } catch (error) {
+      console.error('批量添加失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 订单状态回调
+   */
+  async sendOrderCallback(payload: {
+    session_id?: string;
+    user_id?: string;
+    order_id?: string;
+    item_id?: string;
+    status?: string;
+    raw_status?: string;
+    reply_text?: string;
+  }): Promise<any> {
+    try {
+      const response = await this.api.post<ApiResponse<any>>('/api/orders/callback', payload);
+
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+      throw this.createCustomError(
+        ErrorType.API_ERROR,
+        response.data.message || '订单回调失败',
+        response.data.error
+      );
+    } catch (error) {
+      console.error('订单回调失败:', error);
+      throw error;
+    }
+  }
+
+  /**
    * 管理员登录
    */
   async adminLogin(username: string, password: string): Promise<string> {
@@ -704,6 +884,66 @@ class ChatService {
    */
   getAuthToken(): string | null {
     return localStorage.getItem('auth_token');
+  }
+
+  /**
+   * 获取管理员信息
+   */
+  async getAdminMe(): Promise<any> {
+    try {
+      const response = await this.api.get<ApiResponse<any>>('/api/admin/me');
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+      throw this.createCustomError(
+        ErrorType.API_ERROR,
+        response.data.message || '获取管理员信息失败',
+        response.data.error
+      );
+    } catch (error) {
+      console.error('获取管理员信息失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 获取租户闲鱼账号配置
+   */
+  async getTenantXianyuConfig(tenantId: string): Promise<any> {
+    try {
+      const response = await this.api.get<ApiResponse<any>>(`/api/tenants/${tenantId}/xianyu`);
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+      throw this.createCustomError(
+        ErrorType.API_ERROR,
+        response.data.message || '获取闲鱼账号配置失败',
+        response.data.error
+      );
+    } catch (error) {
+      console.error('获取闲鱼账号配置失败:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * 更新租户闲鱼账号配置
+   */
+  async updateTenantXianyuConfig(tenantId: string, payload: { cookies?: string; seller_name?: string; enabled?: boolean }): Promise<any> {
+    try {
+      const response = await this.api.put<ApiResponse<any>>(`/api/tenants/${tenantId}/xianyu`, payload);
+      if (response.data.success && response.data.data) {
+        return response.data.data;
+      }
+      throw this.createCustomError(
+        ErrorType.API_ERROR,
+        response.data.message || '更新闲鱼账号配置失败',
+        response.data.error
+      );
+    } catch (error) {
+      console.error('更新闲鱼账号配置失败:', error);
+      throw error;
+    }
   }
 }
 

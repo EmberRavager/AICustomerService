@@ -1,8 +1,8 @@
 /* Footer组件样式 */
 
 .app-footer {
-  background: #fff;
-  border-top: 1px solid #f0f0f0;
+  background: rgba(255, 250, 244, 0.8);
+  border-top: 1px solid var(--border);
   padding: 24px 24px 16px;
   text-align: center;
   margin-top: auto;
@@ -23,12 +23,12 @@
 }
 
 .footer-text {
-  color: #8c8c8c;
+  color: var(--text-secondary);
   font-size: 14px;
 }
 
 .footer-link {
-  color: #8c8c8c;
+  color: var(--text-secondary);
   font-size: 14px;
   transition: color 0.3s ease;
   display: inline-flex;
@@ -37,16 +37,16 @@
 }
 
 .footer-link:hover {
-  color: #1890ff;
+  color: var(--brand-strong);
 }
 
 .footer-bottom {
-  border-top: 1px solid #f0f0f0;
+  border-top: 1px solid var(--border);
   padding-top: 16px;
 }
 
 .footer-love {
-  color: #bfbfbf;
+  color: var(--text-tertiary);
   font-size: 12px;
   display: inline-flex;
   align-items: center;
@@ -54,7 +54,7 @@
 }
 
 .heart-icon {
-  color: #ff4d4f;
+  color: #c04e4e;
   animation: heartbeat 1.5s ease-in-out infinite;
 }
 
@@ -124,27 +124,27 @@
 /* 暗色主题支持 */
 @media (prefers-color-scheme: dark) {
   .app-footer {
-    background: #141414;
-    border-top: 1px solid #303030;
+    background: rgba(28, 24, 20, 0.9);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
   }
   
   .footer-text {
-    color: #8c8c8c;
+    color: rgba(243, 237, 228, 0.7);
   }
   
   .footer-link {
-    color: #8c8c8c;
+    color: rgba(243, 237, 228, 0.7);
   }
   
   .footer-link:hover {
-    color: #40a9ff;
+    color: #e2c59c;
   }
   
   .footer-love {
-    color: #595959;
+    color: rgba(243, 237, 228, 0.5);
   }
   
   .footer-bottom {
-    border-top: 1px solid #303030;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
   }
 }

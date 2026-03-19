@@ -93,13 +93,13 @@
   font-size: 14px;
   max-width: 72%;
   transition: all 0.2s ease;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  box-shadow: var(--shadow-sm);
 }
 
 /* 用户消息气泡 */
 .user-bubble {
-  background: #1677ff;
-  color: #fff;
+  background: linear-gradient(135deg, #b88647, #9d6b2f);
+  color: #fffaf4;
   border-bottom-right-radius: 6px;
 }
 
@@ -111,17 +111,17 @@
   width: 0;
   height: 0;
   border: 6px solid transparent;
-  border-left-color: #1677ff;
+  border-left-color: #a77335;
   border-bottom: none;
   border-right: none;
 }
 
 /* AI助手消息气泡 */
 .assistant-bubble {
-  background: #ffffff;
-  color: #262626;
+  background: #fffaf4;
+  color: var(--text-primary);
   border-bottom-left-radius: 6px;
-  border: 1px solid #e6e6e6;
+  border: 1px solid var(--border);
 }
 
 .assistant-bubble::after {
@@ -132,7 +132,7 @@
   width: 0;
   height: 0;
   border: 6px solid transparent;
-  border-right-color: #ffffff;
+  border-right-color: #fffaf4;
   border-bottom: none;
   border-left: none;
 }
@@ -145,16 +145,16 @@
   width: 0;
   height: 0;
   border: 6px solid transparent;
-  border-right-color: #e6e6e6;
+  border-right-color: var(--border);
   border-bottom: none;
   border-left: none;
 }
 
 /* 错误消息气泡 */
 .error-bubble {
-  background: #fff2f0;
-  border: 1px solid #ffccc7;
-  color: #a8071a;
+  background: rgba(180, 61, 61, 0.12);
+  border: 1px solid rgba(180, 61, 61, 0.3);
+  color: #8f2f2f;
 }
 
 .error-bubble::after {
@@ -195,25 +195,25 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 0, 0, 0.1);
-  color: rgba(0, 0, 0, 0.6);
+  background: rgba(43, 36, 28, 0.08);
+  color: rgba(43, 36, 28, 0.6);
   border: none;
   transition: all 0.2s ease;
 }
 
 .copy-button:hover {
-  background: rgba(0, 0, 0, 0.2);
-  color: rgba(0, 0, 0, 0.8);
+  background: rgba(43, 36, 28, 0.16);
+  color: rgba(43, 36, 28, 0.9);
   transform: scale(1.1);
 }
 
 .user-bubble .copy-button {
-  background: rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.8);
+  background: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.9);
 }
 
 .user-bubble .copy-button:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.28);
   color: #fff;
 }
 
@@ -408,26 +408,26 @@
 /* 悬停效果 */
 .message-bubble:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow-md);
 }
 
 .user-bubble:hover {
-  box-shadow: 0 2px 8px rgba(24, 144, 255, 0.3);
+  box-shadow: 0 12px 20px rgba(184, 134, 71, 0.28);
 }
 
 .assistant-bubble:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 10px 18px rgba(35, 28, 22, 0.18);
 }
 
 .error-bubble:hover {
-  box-shadow: 0 2px 8px rgba(255, 77, 79, 0.2);
+  box-shadow: 0 8px 16px rgba(180, 61, 61, 0.2);
 }
 
 /* 流式传输光标样式 */
 .typing-cursor {
   display: inline-block;
   font-weight: bold;
-  color: #1890ff;
+  color: var(--brand);
   margin-left: 2px;
   animation: blink 1s infinite;
 }
@@ -451,6 +451,6 @@
 
 /* 流式传输消息样式 */
 .assistant-message .message-bubble.streaming {
-  border-left: 3px solid #1890ff;
-  background: linear-gradient(90deg, #f0f9ff 0%, #ffffff 100%);
+  border-left: 3px solid var(--brand);
+  background: linear-gradient(90deg, rgba(184, 134, 71, 0.12) 0%, #fffaf4 100%);
 }

@@ -57,8 +57,9 @@ export const chatAPI = {
    * @param {string} sessionId - 会话ID
    * @returns {Promise} - 聊天历史
    */
-  getChatHistory: async (sessionId) => {
-    return apiRequest(`/api/chat/history/${sessionId}`);
+  getChatHistory: async (sessionId, limit = 50, offset = 0) => {
+    const params = new URLSearchParams({ session_id: sessionId, limit, offset });
+    return apiRequest(`/api/chat/history?${params.toString()}`);
   },
 
   /**
@@ -78,55 +79,84 @@ export const chatAPI = {
  */
 export const knowledgeAPI = {
   /**
-   * 上传文档
-   * @param {File} file - 文档文件
-   * @returns {Promise} - 上传结果
-   */
-  uploadDocument: async (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    
-    return apiRequest('/api/knowledge/upload', {
-      method: 'POST',
-      body: formData,
-      headers: {}, // 让浏览器自动设置Content-Type
-    });
-  },
-
-  /**
-   * 获取文档列表
-   * @returns {Promise} - 文档列表
-   */
-  getDocuments: async () => {
-    return apiRequest('/api/knowledge/documents');
-  },
-
-  /**
-   * 删除文档
-   * @param {string} documentId - 文档ID
-   * @returns {Promise} - 删除结果
-   */
-  deleteDocument: async (documentId) => {
-    return apiRequest(`/api/knowledge/documents/${documentId}`, {
-      method: 'DELETE',
-    });
-  },
-
-  /**
    * 搜索知识库
    * @param {string} query - 搜索查询
    * @param {number} limit - 结果数量限制
+   * @param {string} searchType - 搜索类型
    * @returns {Promise} - 搜索结果
    */
-  searchKnowledge: async (query, limit = 5) => {
-    return apiRequest('/api/knowledge/search', {
+  searchKnowledge: async (query, limit = 10, searchType = 'hybrid') => {
+    const params = new URLSearchParams({ query, limit, search_type: searchType });
+    return apiRequest(`/api/knowledge?${params.toString()}`);
+  },
+
+  /**
+   * 获取知识库列表
+   * @param {string} category - 分类
+   * @param {number} limit - 结果数量限制
+   * @param {number} offset - 偏移量
+   * @returns {Promise} - 知识库列表
+   */
+  listKnowledge: async (category = '', limit = 20, offset = 0) => {
+    const params = new URLSearchParams({ category, limit, offset });
+    return apiRequest(`/api/knowledge/list?${params.toString()}`);
+  },
+
+  /**
+   * 获取知识库分类
+   * @returns {Promise} - 分类列表
+   */
+  getCategories: async () => {
+    return apiRequest('/api/knowledge/categories');
+  },
+
+  /**
+   * 新增知识库条目
+   * @param {object} payload - 知识条目
+   * @returns {Promise} - 新增结果
+   */
+  addKnowledge: async (payload) => {
+    return apiRequest('/api/knowledge', {
       method: 'POST',
-      body: JSON.stringify({
-        query,
-        limit,
-      }),
+      body: JSON.stringify(payload)
     });
   },
+
+  /**
+   * 更新知识库条目
+   * @param {string} id - 条目ID
+   * @param {object} payload - 知识条目
+   * @returns {Promise} - 更新结果
+   */
+  updateKnowledge: async (id, payload) => {
+    return apiRequest(`/api/knowledge/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    });
+  },
+
+  /**
+   * 删除知识库条目
+   * @param {string} id - 条目ID
+   * @returns {Promise} - 删除结果
+   */
+  deleteKnowledge: async (id) => {
+    return apiRequest(`/api/knowledge/${id}`, {
+      method: 'DELETE'
+    });
+  },
+
+  /**
+   * 批量添加知识库条目
+   * @param {Array} payload - 知识条目数组
+   * @returns {Promise} - 批量结果
+   */
+  batchAddKnowledge: async (payload) => {
+    return apiRequest('/api/knowledge/batch', {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  }
 };
 
 /**
@@ -212,8 +242,8 @@ export const healthAPI = {
    * @returns {Promise} - 健康状态
    */
   checkHealth: async () => {
-    return apiRequest('/health');
-  },
+    return apiRequest('/api/health');
+  }
 };
 
 // 默认导出所有API

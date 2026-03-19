@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { Layout, Card, Input, Button, Space, message, Spin, Switch, Tag } from 'antd';
+import { Layout, Card, Input, Button, Space, message, Spin, Switch, Tag, Select } from 'antd';
 import { SendOutlined, ClearOutlined, HistoryOutlined } from '@ant-design/icons';
 import { v4 as uuidv4 } from 'uuid';
 import ChatMessage from '../components/ChatMessage';
@@ -33,6 +33,9 @@ const ChatPage: React.FC = () => {
   const [itemInfoLoading, setItemInfoLoading] = useState(false);
   const [itemInfoError, setItemInfoError] = useState<string | null>(null);
   const [manualMode, setManualMode] = useState(false);
+  const [tenantKey, setTenantKey] = useState('');
+  const [tenantOptions, setTenantOptions] = useState<Array<{ label: string; value: string }>>([]);
+  const [tenantLoading, setTenantLoading] = useState(false);
   
   // 引用
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -101,6 +104,24 @@ const ChatPage: React.FC = () => {
       setSessions(sessionList);
     } catch (error) {
       console.error('加载会话列表失败:', error);
+    }
+  };
+
+  const loadTenants = async () => {
+    try {
+      setTenantLoading(true);
+      const data = await chatService.listTenants();
+      const list = data.tenants || [];
+      setTenantOptions(
+        list.map((tenant: any) => ({
+          label: `${tenant.name} (${tenant.tenant_id})`,
+          value: tenant.api_key
+        }))
+      );
+    } catch (error) {
+      setTenantOptions([]);
+    } finally {
+      setTenantLoading(false);
     }
   };
 
@@ -331,6 +352,10 @@ const ChatPage: React.FC = () => {
     }
     loadSessions();
     loadSessionMeta(sessionId);
+    setTenantKey(localStorage.getItem('tenant_key') || '');
+    if (chatService.getAuthToken()) {
+      loadTenants();
+    }
   }, [urlSessionId]);
   
   // 消息变化时滚动到底部
@@ -344,6 +369,21 @@ const ChatPage: React.FC = () => {
       inputRef.current.focus();
     }
   }, [isLoading]);
+
+  const applyTenantKey = async () => {
+    if (!tenantKey.trim()) {
+      message.warning('请输入或选择机器人 Key');
+      return;
+    }
+    localStorage.setItem('tenant_key', tenantKey.trim());
+    message.success('机器人绑定已更新');
+    setMessages([]);
+    setItemInfo(null);
+    setItemInfoError(null);
+    const newSessionId = uuidv4();
+    setCurrentSessionId(newSessionId);
+    await loadSessions();
+  };
   
   return (
     <Layout className="chat-page">
@@ -355,8 +395,8 @@ const ChatPage: React.FC = () => {
         collapsedWidth={0}
         trigger={null}
         style={{
-          background: '#fff',
-          borderRight: '1px solid #f0f0f0',
+          background: 'var(--surface)',
+          borderRight: '1px solid var(--border)',
         }}
       >
         <ChatHistory
@@ -375,7 +415,7 @@ const ChatPage: React.FC = () => {
         <Card className="chat-container" styles={{ body: { padding: 0 } }}>
           {/* 聊天头部 */}
           <div className="chat-header">
-            <Space>
+            <Space className="chat-header-left">
               <Button
                 type="text"
                 icon={<HistoryOutlined />}
@@ -393,7 +433,30 @@ const ChatPage: React.FC = () => {
                 清除会话
               </Button>
             </Space>
-            <Space size={6}>
+            <Space className="chat-header-robot" size={8}>
+              <Tag color="gold">当前机器人</Tag>
+              <Select
+                value={tenantKey || undefined}
+                placeholder="选择机器人 Key"
+                style={{ minWidth: 220 }}
+                loading={tenantLoading}
+                options={tenantOptions}
+                onChange={(value) => setTenantKey(value || '')}
+                allowClear
+                showSearch
+                optionFilterProp="label"
+              />
+              <Input
+                value={tenantKey}
+                onChange={(e) => setTenantKey(e.target.value)}
+                placeholder="或手动输入 X-Tenant-Key"
+                style={{ width: 240 }}
+              />
+              <Button type="primary" onClick={applyTenantKey}>
+                绑定机器人
+              </Button>
+            </Space>
+            <Space className="chat-header-right" size={6}>
               {manualMode && <Tag color="orange">人工接管中</Tag>}
               <span>人工接管</span>
               <Switch

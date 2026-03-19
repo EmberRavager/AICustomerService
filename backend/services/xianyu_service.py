@@ -8,9 +8,10 @@
 import hashlib
 import json
 import time
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
 import requests
+from requests import cookies as requests_cookies
 from loguru import logger
 
 from config import get_settings
@@ -19,27 +20,31 @@ from config import get_settings
 class XianyuService:
     """闲鱼商品信息服务"""
 
-    def __init__(self):
+    def __init__(self, cookies_str: Optional[str] = None):
         settings = get_settings()
         self.api_base = settings.xianyu_api_base
         self.app_key = settings.xianyu_app_key
-        self.cookies_str = settings.xianyu_cookies
+        self.cookies_str = (
+            cookies_str if cookies_str is not None else settings.xianyu_cookies
+        )
 
         self.session = requests.Session()
-        self.session.headers.update({
-            "accept": "application/json",
-            "content-type": "application/x-www-form-urlencoded",
-            "origin": "https://www.goofish.com",
-            "referer": "https://www.goofish.com/",
-            "user-agent": "Mozilla/5.0"
-        })
+        self.session.headers.update(
+            {
+                "accept": "application/json",
+                "content-type": "application/x-www-form-urlencoded",
+                "origin": "https://www.goofish.com",
+                "referer": "https://www.goofish.com/",
+                "user-agent": "Mozilla/5.0",
+            }
+        )
 
         if self.cookies_str:
             self._load_cookies(self.cookies_str)
 
     def _load_cookies(self, cookies_str: str) -> None:
         """加载 Cookie 字符串到会话"""
-        jar = requests.cookies.RequestsCookieJar()
+        jar = requests_cookies.RequestsCookieJar()
         for part in cookies_str.split(";"):
             part = part.strip()
             if not part or "=" not in part:
@@ -79,7 +84,7 @@ class XianyuService:
             "type": "originaljson",
             "dataType": "json",
             "api": "mtop.taobao.idle.pc.detail",
-            "sessionOption": "AutoLoginOnly"
+            "sessionOption": "AutoLoginOnly",
         }
         payload = {"data": data_str}
 
